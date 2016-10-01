@@ -49,10 +49,10 @@ impl Scheme for RootScheme {
         Ok(id)
     }
 
-    fn dup(&self, file: usize) -> Result<usize> {
+    fn dup(&self, resource: usize) -> Result<usize> {
         let mut handles = self.handles.write();
         let inner = {
-            let inner = handles.get(&file).ok_or(Error::new(EBADF))?;
+            let inner = handles.get(&resource).ok_or(Error::new(EBADF))?;
             inner.clone()
         };
 
@@ -62,31 +62,31 @@ impl Scheme for RootScheme {
         Ok(id)
     }
 
-    fn read(&self, file: usize, buf: &mut [u8]) -> Result<usize> {
+    fn read(&self, resource: usize, buf: &mut [u8]) -> Result<usize> {
         let inner = {
             let handles = self.handles.read();
-            let inner = handles.get(&file).ok_or(Error::new(EBADF))?;
+            let inner = handles.get(&resource).ok_or(Error::new(EBADF))?;
             inner.clone()
         };
 
         inner.read(buf)
     }
 
-    fn write(&self, file: usize, buf: &[u8]) -> Result<usize> {
+    fn write(&self, resource: usize, buf: &[u8]) -> Result<usize> {
         let inner = {
             let handles = self.handles.read();
-            let inner = handles.get(&file).ok_or(Error::new(EBADF))?;
+            let inner = handles.get(&resource).ok_or(Error::new(EBADF))?;
             inner.clone()
         };
 
         inner.write(buf)
     }
 
-    fn fsync(&self, _file: usize) -> Result<usize> {
+    fn fsync(&self, _resource: usize) -> Result<usize> {
         Ok(0)
     }
 
-    fn close(&self, file: usize) -> Result<usize> {
-        self.handles.write().remove(&file).ok_or(Error::new(EBADF)).and(Ok(0))
+    fn close(&self, resource: usize) -> Result<usize> {
+        self.handles.write().remove(&resource).ok_or(Error::new(EBADF)).and(Ok(0))
     }
 }

@@ -19,15 +19,15 @@ impl Scheme for IrqScheme {
         }
     }
 
-    fn dup(&self, file: usize) -> Result<usize> {
-        Ok(file)
+    fn dup(&self, resource: usize) -> Result<usize> {
+        Ok(resource)
     }
 
-    fn read(&self, file: usize, buffer: &mut [u8]) -> Result<usize> {
+    fn read(&self, resource: usize, buffer: &mut [u8]) -> Result<usize> {
         // Ensures that the length of the buffer is larger than the size of a usize
         if buffer.len() >= mem::size_of::<usize>() {
-            let ack = ACKS.lock()[file];
-            let current = COUNTS.lock()[file];
+            let ack = ACKS.lock()[resource];
+            let current = COUNTS.lock()[resource];
             if ack != current {
                 // Safe if the length of the buffer is larger than the size of a usize
                 assert!(buffer.len() >= mem::size_of::<usize>());
@@ -41,14 +41,14 @@ impl Scheme for IrqScheme {
         }
     }
 
-    fn write(&self, file: usize, buffer: &[u8]) -> Result<usize> {
+    fn write(&self, resource: usize, buffer: &[u8]) -> Result<usize> {
         if buffer.len() >= mem::size_of::<usize>() {
             assert!(buffer.len() >= mem::size_of::<usize>());
             let ack = unsafe { *(buffer.as_ptr() as *const usize) };
-            let current = COUNTS.lock()[file];
+            let current = COUNTS.lock()[resource];
             if ack == current {
-                ACKS.lock()[file] = ack;
-                unsafe { acknowledge(file); }
+                ACKS.lock()[resource] = ack;
+                unsafe { acknowledge(resource); }
                 Ok(mem::size_of::<usize>())
             } else {
                 Ok(0)
@@ -58,11 +58,11 @@ impl Scheme for IrqScheme {
         }
     }
 
-    fn fsync(&self, _file: usize) -> Result<usize> {
+    fn fsync(&self, _resource: usize) -> Result<usize> {
         Ok(0)
     }
 
-    fn close(&self, _file: usize) -> Result<usize> {
+    fn close(&self, _resource: usize) -> Result<usize> {
         Ok(0)
     }
 }

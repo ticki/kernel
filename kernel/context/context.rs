@@ -5,17 +5,23 @@ use spin::Mutex;
 
 use arch;
 use syscall::data::Event;
-use super::file::File;
+use super::resource::Resource;
 use super::memory::{Grant, Memory, SharedMemory};
 
+/// The status of a context.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Status {
+    /// This context is ready to be switched to.
     Runnable,
+    /// This context is blocked by some other process or job.
     Blocked,
+    /// This context has exited with some status.
     Exited(usize),
 }
 
-/// A context, which identifies either a process or a thread
+/// A context, which identifies either a process or a thread.
+///
+/// This type contains data representing some context.
 #[derive(Debug)]
 pub struct Context {
     /// The ID of this context
@@ -48,8 +54,8 @@ pub struct Context {
     pub events: Arc<Mutex<VecDeque<Event>>>,
     /// The process environment
     pub env: Arc<Mutex<BTreeMap<Box<[u8]>, Arc<Mutex<Vec<u8>>>>>>,
-    /// The open files in the scheme
-    pub files: Arc<Mutex<Vec<Option<File>>>>,
+    /// The open resources in the scheme
+    pub resources: Arc<Mutex<Vec<Option<Resource>>>>,
 }
 
 impl Context {
@@ -71,7 +77,7 @@ impl Context {
             cwd: Arc::new(Mutex::new(Vec::new())),
             events: Arc::new(Mutex::new(VecDeque::new())),
             env: Arc::new(Mutex::new(BTreeMap::new())),
-            files: Arc::new(Mutex::new(Vec::new())),
+            resources: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -116,37 +122,37 @@ impl Context {
         }
     }
 
-    /// Add a file to the lowest available slot.
-    /// Return the file descriptor number or None if no slot was found
-    pub fn add_file(&self, file: File) -> Option<usize> {
-        let mut files = self.files.lock();
-        for (i, mut file_option) in files.iter_mut().enumerate() {
-            if file_option.is_none() {
-                *file_option = Some(file);
+    /// Add a resource to the lowest available slot.
+    /// Return the resource descriptor number or None if no slot was found
+    pub fn add_resource(&self, resource: Resource) -> Option<usize> {
+        let mut resources = self.resources.lock();
+        for (i, mut resource_option) in resources.iter_mut().enumerate() {
+            if resource_option.is_none() {
+                *resource_option = Some(resource);
                 return Some(i);
             }
         }
-        let len = files.len();
-        if len < super::CONTEXT_MAX_FILES {
-            files.push(Some(file));
+        let len = resources.len();
+        if len < super::CONTEXT_MAX_RESOURCES {
+            resources.push(Some(resource));
             Some(len)
         } else {
             None
         }
     }
 
-    /// Get a file
-    pub fn get_file(&self, i: usize) -> Option<File> {
-        let files = self.files.lock();
-        if i < files.len() { files[i] } else { None }
+    /// Get a resource
+    pub fn get_resource(&self, i: usize) -> Option<Resource> {
+        let resources = self.resources.lock();
+        if i < resources.len() { resources[i] } else { None }
     }
 
-    /// Remove a file
-    // TODO: adjust files vector to smaller size if possible
-    pub fn remove_file(&self, i: usize) -> Option<File> {
-        let mut files = self.files.lock();
-        if i < files.len() {
-            files[i].take()
+    /// Remove a resource
+    // TODO: adjust resources vector to smaller size if possible
+    pub fn remove_resource(&self, i: usize) -> Option<Resource> {
+        let mut resources = self.resources.lock();
+        if i < resources.len() {
+            resources[i].take()
         } else {
             None
         }

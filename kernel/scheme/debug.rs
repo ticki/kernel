@@ -37,14 +37,14 @@ impl Scheme for DebugScheme {
         Ok(0)
     }
 
-    fn dup(&self, _file: usize) -> Result<usize> {
+    fn dup(&self, _resource: usize) -> Result<usize> {
         Ok(0)
     }
 
-    /// Read the file `number` into the `buffer`
+    /// Read the resource `number` into the `buffer`
     ///
     /// Returns the number of bytes read
-    fn read(&self, _file: usize, buf: &mut [u8]) -> Result<usize> {
+    fn read(&self, _resource: usize, buf: &mut [u8]) -> Result<usize> {
         loop {
             let mut i = 0;
             {
@@ -63,25 +63,25 @@ impl Scheme for DebugScheme {
         }
     }
 
-    /// Write the `buffer` to the `file`
+    /// Write the `buffer` to the `resource`
     ///
     /// Returns the number of bytes written
-    fn write(&self, _file: usize, buffer: &[u8]) -> Result<usize> {
+    fn write(&self, _resource: usize, buffer: &[u8]) -> Result<usize> {
         //TODO: Write bytes, do not convert to str
         print!("{}", unsafe { str::from_utf8_unchecked(buffer) });
         Ok(buffer.len())
     }
 
-    fn fevent(&self, _file: usize, _flags: usize) -> Result<usize> {
+    fn fevent(&self, _resource: usize, _flags: usize) -> Result<usize> {
         Ok(0)
     }
 
-    fn fsync(&self, _file: usize) -> Result<usize> {
+    fn fsync(&self, _resource: usize) -> Result<usize> {
         Ok(0)
     }
 
-    /// Close the file `number`
-    fn close(&self, _file: usize) -> Result<usize> {
+    /// Close the resource `number`
+    fn close(&self, _resource: usize) -> Result<usize> {
         Ok(0)
     }
 }

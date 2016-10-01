@@ -69,7 +69,7 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
         let grants;
         let cwd;
         let env;
-        let files;
+        let resources;
 
         // Copy from old process
         {
@@ -192,30 +192,30 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
             }
 
             if flags & CLONE_FILES == CLONE_FILES {
-                files = context.files.clone();
+                resources = context.resources.clone();
             } else {
-                files = Arc::new(Mutex::new(context.files.lock().clone()));
+                resources = Arc::new(Mutex::new(context.resources.lock().clone()));
             }
         }
 
-        // If not cloning files, dup to get a new number from scheme
+        // If not cloning resources, dup to get a new number from scheme
         // This has to be done outside the context lock to prevent deadlocks
         if flags & CLONE_FILES == 0 {
-            for (fd, mut file_option) in files.lock().iter_mut().enumerate() {
-                let new_file_option = if let Some(file) = *file_option {
+            for (fd, mut resource_option) in resources.lock().iter_mut().enumerate() {
+                let new_resource_option = if let Some(resource) = *resource_option {
                     let result = {
                         let scheme = {
                             let schemes = scheme::schemes();
-                            let scheme = schemes.get(file.scheme).ok_or(Error::new(EBADF))?;
+                            let scheme = schemes.get(resource.scheme).ok_or(Error::new(EBADF))?;
                             scheme.clone()
                         };
-                        let result = scheme.dup(file.number);
+                        let result = scheme.dup(resource.number);
                         result
                     };
                     match result {
                         Ok(new_number) => {
-                            Some(context::file::File {
-                                scheme: file.scheme,
+                            Some(context::resource::Resource {
+                                scheme: resource.scheme,
                                 number: new_number,
                             })
                         }
@@ -228,7 +228,7 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
                     None
                 };
 
-                *file_option = new_file_option;
+                *resource_option = new_resource_option;
             }
         }
 
@@ -390,7 +390,7 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
 
             context.env = env;
 
-            context.files = files;
+            context.resources = resources;
         }
     }
 
@@ -411,7 +411,7 @@ pub fn exit(status: usize) -> ! {
             drop(context.heap.take());
             drop(context.stack.take());
             context.grants = Arc::new(Mutex::new(Vec::new()));
-            context.files = Arc::new(Mutex::new(Vec::new()));
+            context.resources = Arc::new(Mutex::new(Vec::new()));
             context.status = context::Status::Exited(status);
 
             let vfork = context.vfork;
@@ -450,13 +450,13 @@ pub fn exec(path: &[u8], arg_ptrs: &[[usize; 2]]) -> Result<usize> {
             args.push(arg.to_vec()); // Must be moved into kernel space before exec unmaps all memory
         }
 
-        let file = syscall::open(path, 0)?;
+        let resource = syscall::open(path, 0)?;
         let mut stat = Stat::default();
-        syscall::fstat(file, &mut stat)?;
-        // TODO: Only read elf header, not entire file. Then read required segments
+        syscall::fstat(resource, &mut stat)?;
+        // TODO: Only read elf header, not entire resource. Then read required segments
         let mut data = vec![0; stat.st_size as usize];
-        syscall::read(file, &mut data)?;
-        let _ = syscall::close(file);
+        syscall::read(resource, &mut data)?;
+        let _ = syscall::close(resource);
 
         match elf::Elf::from(&data) {
             Ok(elf) => {
@@ -487,7 +487,7 @@ pub fn exec(path: &[u8], arg_ptrs: &[[usize; 2]]) -> Result<usize> {
                             );
 
                             unsafe {
-                                // Copy file data
+                                // Copy resource data
                                 memcpy(segment.p_vaddr as *mut u8,
                                         (elf.data.as_ptr() as usize + segment.p_offset as usize) as *const u8,
                                         segment.p_filesz as usize);

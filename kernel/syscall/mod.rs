@@ -4,7 +4,7 @@ extern crate syscall;
 
 pub use self::syscall::{data, error, flag, number, scheme};
 
-pub use self::fs::*;
+pub use self::resource::*;
 pub use self::process::*;
 pub use self::validate::*;
 
@@ -12,8 +12,8 @@ use self::data::Stat;
 use self::error::{Error, Result, ENOSYS};
 use self::number::*;
 
-/// Filesystem syscalls
-pub mod fs;
+/// Resource management syscalls
+pub mod resource;
 
 /// Process syscalls
 pub mod process;

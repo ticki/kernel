@@ -19,8 +19,8 @@ mod switch;
 /// Event handling
 pub mod event;
 
-/// File struct - defines a scheme and a file number
-pub mod file;
+/// Resource struct - defines a scheme and a resource number
+pub mod resource;
 
 /// Memory struct - contains a set of pages for a context
 pub mod memory;
@@ -28,8 +28,8 @@ pub mod memory;
 /// Limit on number of contexts
 pub const CONTEXT_MAX_CONTEXTS: usize = 65536;
 
-/// Maximum context files
-pub const CONTEXT_MAX_FILES: usize = 65536;
+/// Maximum context resources
+pub const CONTEXT_MAX_RESOURCES: usize = 65536;
 
 /// Contexts list
 static CONTEXTS: Once<RwLock<ContextList>> = Once::new();
