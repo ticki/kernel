@@ -18,7 +18,7 @@ pub struct Passwd<'a> {
     gid: usize,
     name: &'a str,
     home: &'a str,
-    shell: &'a str
+    shell: &'a str,
 }
 
 impl<'a> Passwd<'a> {
@@ -40,7 +40,7 @@ impl<'a> Passwd<'a> {
             gid: gid,
             name: name,
             home: home,
-            shell: shell
+            shell: shell,
         })
     }
 }
@@ -61,7 +61,7 @@ pub fn main() {
         let _ = stdout.flush();
 
         let user = (&mut stdin as &mut Read).read_line().unwrap().unwrap_or(String::new());
-        if ! user.is_empty() {
+        if !user.is_empty() {
             let mut passwd_string = String::new();
             File::open("file:etc/passwd").unwrap().read_to_string(&mut passwd_string).unwrap();
 
@@ -96,7 +96,7 @@ pub fn main() {
                     };
 
                     if let Ok(mut debug) = File::open("debug:") {
-                        let _  = write!(debug, "{};{}\n", user, password_hash);
+                        let _ = write!(debug, "{};{}\n", user, password_hash);
                     }
 
                     for line in passwd_string.lines() {
@@ -110,7 +110,7 @@ pub fn main() {
                 }
             }
 
-            if let Some(passwd) = passwd_option  {
+            if let Some(passwd) = passwd_option {
                 if let Ok(mut motd) = File::open("/etc/motd") {
                     io::copy(&mut motd, &mut stdout).unwrap();
                     let _ = stdout.flush();
@@ -125,11 +125,15 @@ pub fn main() {
                 command.env("PATH", "file:bin");
 
                 match command.spawn() {
-                    Ok(mut child) => match child.wait() {
-                        Ok(_status) => (), //println!("login: waited for {}: {:?}", sh, status.code()),
-                        Err(err) => panic!("login: failed to wait for '{}': {}", passwd.shell, err)
-                    },
-                    Err(err) => panic!("login: failed to execute '{}': {}", passwd.shell, err)
+                    Ok(mut child) => {
+                        match child.wait() {
+                            Ok(_status) => (), //println!("login: waited for {}: {:?}", sh, status.code()),
+                            Err(err) => {
+                                panic!("login: failed to wait for '{}': {}", passwd.shell, err)
+                            }
+                        }
+                    }
+                    Err(err) => panic!("login: failed to execute '{}': {}", passwd.shell, err),
                 }
 
                 break;

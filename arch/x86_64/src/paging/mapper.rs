@@ -13,9 +13,7 @@ pub struct Mapper {
 impl Mapper {
     /// Create a new page table
     pub unsafe fn new() -> Mapper {
-        Mapper {
-            p4: Unique::new(table::P4),
-        }
+        Mapper { p4: Unique::new(table::P4) }
     }
 
     pub fn p4(&self) -> &Table<Level4> {
@@ -33,10 +31,12 @@ impl Mapper {
         let mut p1 = p2.next_table_create(page.p2_index());
 
         assert!(p1[page.p1_index()].is_unused(),
-            "{:X}: Set to {:X}: {:?}, requesting {:X}: {:?}",
-            page.start_address().get(),
-            p1[page.p1_index()].address().get(), p1[page.p1_index()].flags(),
-            frame.start_address().get(), flags);
+                "{:X}: Set to {:X}: {:?}, requesting {:X}: {:?}",
+                page.start_address().get(),
+                p1[page.p1_index()].address().get(),
+                p1[page.p1_index()].flags(),
+                frame.start_address().get(),
+                flags);
         p1[page.p1_index()].set(frame, flags | entry::PRESENT);
     }
 
@@ -64,10 +64,10 @@ impl Mapper {
     /// Unmap a page
     pub fn unmap(&mut self, page: Page) {
         let p1 = self.p4_mut()
-                     .next_table_mut(page.p4_index())
-                     .and_then(|p3| p3.next_table_mut(page.p3_index()))
-                     .and_then(|p2| p2.next_table_mut(page.p2_index()))
-                     .expect("mapping code does not support huge pages");
+            .next_table_mut(page.p4_index())
+            .and_then(|p3| p3.next_table_mut(page.p3_index()))
+            .and_then(|p2| p2.next_table_mut(page.p2_index()))
+            .expect("mapping code does not support huge pages");
         let frame = p1[page.p1_index()].pointed_frame().unwrap();
         p1[page.p1_index()].set_unused();
         // TODO free p(1,2,3) table if empty
@@ -77,24 +77,26 @@ impl Mapper {
     /// Unmap a page, return frame without free
     pub fn unmap_return(&mut self, page: Page) -> Frame {
         let p1 = self.p4_mut()
-                     .next_table_mut(page.p4_index())
-                     .and_then(|p3| p3.next_table_mut(page.p3_index()))
-                     .and_then(|p2| p2.next_table_mut(page.p2_index()))
-                     .expect("mapping code does not support huge pages");
+            .next_table_mut(page.p4_index())
+            .and_then(|p3| p3.next_table_mut(page.p3_index()))
+            .and_then(|p2| p2.next_table_mut(page.p2_index()))
+            .expect("mapping code does not support huge pages");
         let frame = p1[page.p1_index()].pointed_frame().unwrap();
         p1[page.p1_index()].set_unused();
         frame
     }
 
     pub fn translate_page(&self, page: Page) -> Option<Frame> {
-        self.p4().next_table(page.p4_index())
+        self.p4()
+            .next_table(page.p4_index())
             .and_then(|p3| p3.next_table(page.p3_index()))
             .and_then(|p2| p2.next_table(page.p2_index()))
             .and_then(|p1| p1[page.p1_index()].pointed_frame())
     }
 
     pub fn translate_page_flags(&self, page: Page) -> Option<EntryFlags> {
-        self.p4().next_table(page.p4_index())
+        self.p4()
+            .next_table(page.p4_index())
             .and_then(|p3| p3.next_table(page.p3_index()))
             .and_then(|p2| p2.next_table(page.p2_index()))
             .and_then(|p1| Some(p1[page.p1_index()].flags()))

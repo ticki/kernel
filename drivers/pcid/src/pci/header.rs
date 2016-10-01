@@ -26,18 +26,24 @@ pub struct PciHeader {
     pub interrupt_line: u8,
     pub interrupt_pin: u8,
     pub min_grant: u8,
-    pub max_latency: u8
+    pub max_latency: u8,
 }
 
 impl Deref for PciHeader {
     type Target = [u32];
     fn deref(&self) -> &[u32] {
-        unsafe { slice::from_raw_parts(self as *const PciHeader as *const u32, mem::size_of::<PciHeader>()/4) as &[u32] }
+        unsafe {
+            slice::from_raw_parts(self as *const PciHeader as *const u32,
+                                  mem::size_of::<PciHeader>() / 4) as &[u32]
+        }
     }
 }
 
 impl DerefMut for PciHeader {
     fn deref_mut(&mut self) -> &mut [u32] {
-        unsafe { slice::from_raw_parts_mut(self as *mut PciHeader as *mut u32, mem::size_of::<PciHeader>()/4) as &mut [u32] }
+        unsafe {
+            slice::from_raw_parts_mut(self as *mut PciHeader as *mut u32,
+                                      mem::size_of::<PciHeader>() / 4) as &mut [u32]
+        }
     }
 }

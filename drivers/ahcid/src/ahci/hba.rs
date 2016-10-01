@@ -73,7 +73,10 @@ impl HbaPort {
         }
     }
 
-    pub fn init(&mut self, clb: &mut Dma<[HbaCmdHeader; 32]>, ctbas: &mut [Dma<HbaCmdTable>; 32], fb: &mut Dma<[u8; 256]>) {
+    pub fn init(&mut self,
+                clb: &mut Dma<[HbaCmdHeader; 32]>,
+                ctbas: &mut [Dma<HbaCmdTable>; 32],
+                fb: &mut Dma<[u8; 256]>) {
         self.stop();
 
         self.clb.write(clb.physical() as u64);
@@ -90,7 +93,10 @@ impl HbaPort {
         self.start();
     }
 
-    pub unsafe fn identify(&mut self, clb: &mut Dma<[HbaCmdHeader; 32]>, ctbas: &mut [Dma<HbaCmdTable>; 32]) -> Option<u64> {
+    pub unsafe fn identify(&mut self,
+                           clb: &mut Dma<[HbaCmdHeader; 32]>,
+                           ctbas: &mut [Dma<HbaCmdTable>; 32])
+                           -> Option<u64> {
         self.is.write(u32::MAX);
 
         let dest: Dma<[u16; 256]> = Dma::new([0; 256]).unwrap();
@@ -102,7 +108,9 @@ impl HbaPort {
 
             {
                 let cmdtbl = &mut ctbas[slot as usize];
-                ptr::write_bytes(cmdtbl.deref_mut() as *mut HbaCmdTable as *mut u8, 0, size_of::<HbaCmdTable>());
+                ptr::write_bytes(cmdtbl.deref_mut() as *mut HbaCmdTable as *mut u8,
+                                 0,
+                                 size_of::<HbaCmdTable>());
 
                 let prdt_entry = &mut cmdtbl.prdt_entry[0];
                 prdt_entry.dba.write(dest.physical() as u64);
@@ -173,8 +181,7 @@ impl HbaPort {
                 }
             }
 
-            let mut sectors = (dest[100] as u64) |
-                              ((dest[101] as u64) << 16) |
+            let mut sectors = (dest[100] as u64) | ((dest[101] as u64) << 16) |
                               ((dest[102] as u64) << 32) |
                               ((dest[103] as u64) << 48);
 
@@ -186,7 +193,11 @@ impl HbaPort {
             };
 
             println!("   + Serial: {} Firmware: {} Model: {} {}-bit LBA Size: {} MB",
-                        serial.trim(), firmware.trim(), model.trim(), lba_bits, sectors / 2048);
+                     serial.trim(),
+                     firmware.trim(),
+                     model.trim(),
+                     lba_bits,
+                     sectors / 2048);
 
             Some(sectors * 512)
         } else {
@@ -219,8 +230,15 @@ impl HbaPort {
         None
     }
 
-    pub fn ata_dma(&mut self, block: u64, sectors: usize, write: bool, clb: &mut Dma<[HbaCmdHeader; 32]>, ctbas: &mut [Dma<HbaCmdTable>; 32], buf: &mut Dma<[u8; 256 * 512]>) -> Result<usize> {
-        //println!("AHCI {:X} DMA BLOCK: {:X} SECTORS: {} WRITE: {}", (self as *mut HbaPort) as usize, block, sectors, write);
+    pub fn ata_dma(&mut self,
+                   block: u64,
+                   sectors: usize,
+                   write: bool,
+                   clb: &mut Dma<[HbaCmdHeader; 32]>,
+                   ctbas: &mut [Dma<HbaCmdTable>; 32],
+                   buf: &mut Dma<[u8; 256 * 512]>)
+                   -> Result<usize> {
+        // println!("AHCI {:X} DMA BLOCK: {:X} SECTORS: {} WRITE: {}", (self as *mut HbaPort) as usize, block, sectors, write);
 
         assert!(sectors > 0 && sectors < 256);
 
@@ -236,7 +254,11 @@ impl HbaPort {
 
             {
                 let cmdtbl = &mut ctbas[slot as usize];
-                unsafe { ptr::write_bytes(cmdtbl.deref_mut() as *mut HbaCmdTable as *mut u8, 0, size_of::<HbaCmdTable>()) };
+                unsafe {
+                    ptr::write_bytes(cmdtbl.deref_mut() as *mut HbaCmdTable as *mut u8,
+                                     0,
+                                     size_of::<HbaCmdTable>())
+                };
 
                 let prdt_entry = &mut cmdtbl.prdt_entry[0];
                 prdt_entry.dba.write(buf.physical() as u64);
@@ -244,7 +266,8 @@ impl HbaPort {
             }
 
             {
-                let cmdfis = unsafe { &mut *(ctbas[slot as usize].cfis.as_mut_ptr() as *mut FisRegH2D) };
+                let cmdfis =
+                    unsafe { &mut *(ctbas[slot as usize].cfis.as_mut_ptr() as *mut FisRegH2D) };
 
                 cmdfis.fis_type.write(FisType::RegH2D as u8);
                 cmdfis.pm.write(1 << 7);
@@ -274,13 +297,17 @@ impl HbaPort {
 
             while self.ci.readf(1 << slot) {
                 if self.is.readf(HBA_PORT_IS_TFES) {
-                    println!("IS_TFES set in CI loop TFS {:X} SERR {:X}", self.tfd.read(), self.serr.read());
+                    println!("IS_TFES set in CI loop TFS {:X} SERR {:X}",
+                             self.tfd.read(),
+                             self.serr.read());
                     return Err(Error::new(EIO));
                 }
             }
 
             if self.is.readf(HBA_PORT_IS_TFES) {
-                println!("IS_TFES set after CI loop TFS {:X} SERR {:X}", self.tfd.read(), self.serr.read());
+                println!("IS_TFES set after CI loop TFS {:X} SERR {:X}",
+                         self.tfd.read(),
+                         self.serr.read());
                 return Err(Error::new(EIO));
             }
 

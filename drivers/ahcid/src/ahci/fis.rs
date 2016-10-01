@@ -17,7 +17,7 @@ pub enum FisType {
     /// PIO setup FIS - device to host
     PioSetup = 0x5F,
     /// Set device bits FIS - device to host
-    DevBits = 0xA1
+    DevBits = 0xA1,
 }
 
 #[repr(packed)]

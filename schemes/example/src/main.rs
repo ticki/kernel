@@ -24,7 +24,7 @@ impl Scheme for ExampleScheme {
     }
 }
 
-fn main(){
+fn main() {
     {
         let events = syscall::open("event:", 0).unwrap();
 
@@ -47,7 +47,8 @@ fn main(){
     }
 
     thread::spawn(move || {
-        let mut socket = File::create(":example").expect("example: failed to create example scheme");
+        let mut socket = File::create(":example")
+            .expect("example: failed to create example scheme");
         let scheme = ExampleScheme;
         loop {
             let mut packet = Packet::default();

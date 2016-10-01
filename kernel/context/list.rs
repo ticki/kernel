@@ -12,7 +12,7 @@ use super::context::Context;
 /// Context list type
 pub struct ContextList {
     map: BTreeMap<usize, Arc<RwLock<Context>>>,
-    next_id: usize
+    next_id: usize,
 }
 
 impl ContextList {
@@ -20,7 +20,7 @@ impl ContextList {
     pub fn new() -> Self {
         ContextList {
             map: BTreeMap::new(),
-            next_id: 1
+            next_id: 1,
         }
     }
 
@@ -61,11 +61,12 @@ impl ContextList {
     }
 
     /// Spawn a context from a function.
-    pub fn spawn(&mut self, func: extern fn()) -> Result<&Arc<RwLock<Context>>> {
+    pub fn spawn(&mut self, func: extern "C" fn()) -> Result<&Arc<RwLock<Context>>> {
         let context_lock = self.new_context()?;
         {
             let mut context = context_lock.write();
-            let mut fx = unsafe { Box::from_raw(::alloc::heap::allocate(512, 16) as *mut [u8; 512]) };
+            let mut fx =
+                unsafe { Box::from_raw(::alloc::heap::allocate(512, 16) as *mut [u8; 512]) };
             for b in fx.iter_mut() {
                 *b = 0;
             }

@@ -4,7 +4,7 @@ use super::{PciDev, PciHeader};
 
 pub struct PciFunc<'pci> {
     pub dev: &'pci PciDev<'pci>,
-    pub num: u8
+    pub num: u8,
 }
 
 impl<'pci> PciFunc<'pci> {

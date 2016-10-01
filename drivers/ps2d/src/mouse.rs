@@ -33,13 +33,13 @@ pub fn mouse(extra_packet: bool) {
             packet_i += 1;
 
             let flags = MousePacketFlags::from_bits_truncate(packets[0]);
-            if ! flags.contains(ALWAYS_ON) {
+            if !flags.contains(ALWAYS_ON) {
                 println!("MOUSE MISALIGN {:X}", packets[0]);
 
                 packets = [0; 4];
                 packet_i = 0;
             } else if packet_i >= packets.len() || (!extra_packet && packet_i >= 3) {
-                if ! flags.contains(X_OVERFLOW) && ! flags.contains(Y_OVERFLOW) {
+                if !flags.contains(X_OVERFLOW) && !flags.contains(Y_OVERFLOW) {
                     let mut dx = packets[1] as isize;
                     if flags.contains(X_SIGN) {
                         dx -= 0x100;
@@ -50,11 +50,7 @@ pub fn mouse(extra_packet: bool) {
                         dy -= 0x100;
                     }
 
-                    let extra = if extra_packet {
-                        packets[3]
-                    } else {
-                        0
-                    };
+                    let extra = if extra_packet { packets[3] } else { 0 };
 
                     print!("ps2d: IRQ {:?}, {}, {}, {}\n", flags, dx, dy, extra);
                 } else {

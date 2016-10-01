@@ -27,7 +27,7 @@ unsafe fn init_pat() {
     let uncacheable = 0;
     let write_combining = 1;
     let write_through = 4;
-    //let write_protected = 5;
+    // let write_protected = 5;
     let write_back = 6;
     let uncached = 7;
 
@@ -41,13 +41,14 @@ unsafe fn init_pat() {
     let pat6 = pat2;
     let pat7 = pat3;
 
-    msr::wrmsr(msr::IA32_PAT, pat7 << 56 | pat6 << 48 | pat5 << 40 | pat4 << 32
-                            | pat3 << 24 | pat2 << 16 | pat1 << 8 | pat0);
+    msr::wrmsr(msr::IA32_PAT,
+               pat7 << 56 | pat6 << 48 | pat5 << 40 | pat4 << 32 | pat3 << 24 | pat2 << 16 |
+               pat1 << 8 | pat0);
 }
 
 /// Copy tdata, clear tbss, set TCB self pointer
 unsafe fn init_tcb(cpu_id: usize) -> usize {
-    extern {
+    extern "C" {
         /// The starting byte of the thread data segment
         static mut __tdata_start: u8;
         /// The ending byte of the thread data segment
@@ -60,14 +61,14 @@ unsafe fn init_tcb(cpu_id: usize) -> usize {
 
     let tcb_offset;
     {
-        let size = & __tbss_end as *const _ as usize - & __tdata_start as *const _ as usize;
-        let tbss_offset = & __tbss_start as *const _ as usize - & __tdata_start as *const _ as usize;
+        let size = &__tbss_end as *const _ as usize - &__tdata_start as *const _ as usize;
+        let tbss_offset = &__tbss_start as *const _ as usize - &__tdata_start as *const _ as usize;
 
         let start = ::KERNEL_PERCPU_OFFSET + ::KERNEL_PERCPU_SIZE * cpu_id;
         let end = start + size;
         tcb_offset = end - mem::size_of::<usize>();
 
-        ::externs::memcpy(start as *mut u8, & __tdata_start as *const u8, tbss_offset);
+        ::externs::memcpy(start as *mut u8, &__tdata_start as *const u8, tbss_offset);
         ::externs::memset((start + tbss_offset) as *mut u8, 0, size - tbss_offset);
 
         *(tcb_offset as *mut usize) = end;
@@ -78,8 +79,11 @@ unsafe fn init_tcb(cpu_id: usize) -> usize {
 /// Initialize paging
 ///
 /// Returns page table and thread control block offset
-pub unsafe fn init(cpu_id: usize, stack_start: usize, stack_end: usize) -> (ActivePageTable, usize) {
-    extern {
+pub unsafe fn init(cpu_id: usize,
+                   stack_start: usize,
+                   stack_end: usize)
+                   -> (ActivePageTable, usize) {
+    extern "C" {
         /// The starting byte of the text (code) data segment.
         static mut __text_start: u8;
         /// The ending byte of the text (code) data segment.
@@ -110,7 +114,8 @@ pub unsafe fn init(cpu_id: usize, stack_start: usize, stack_end: usize) -> (Acti
 
     let mut active_table = ActivePageTable::new();
 
-    let mut temporary_page = TemporaryPage::new(Page::containing_address(VirtualAddress::new(0x8_0000_0000)));
+    let mut temporary_page =
+        TemporaryPage::new(Page::containing_address(VirtualAddress::new(0x8_0000_0000)));
 
     let mut new_table = {
         let frame = allocate_frame().expect("no more frames in paging::init new_table");
@@ -121,7 +126,7 @@ pub unsafe fn init(cpu_id: usize, stack_start: usize, stack_end: usize) -> (Acti
         {
             // Map tdata and tbss
             {
-                let size = & __tbss_end as *const _ as usize - & __tdata_start as *const _ as usize;
+                let size = &__tbss_end as *const _ as usize - &__tdata_start as *const _ as usize;
 
                 let start = ::KERNEL_PERCPU_OFFSET + ::KERNEL_PERCPU_SIZE * cpu_id;
                 let end = start + size;
@@ -138,29 +143,36 @@ pub unsafe fn init(cpu_id: usize, stack_start: usize, stack_end: usize) -> (Acti
                     let start_frame = Frame::containing_address(PhysicalAddress::new(start));
                     let end_frame = Frame::containing_address(PhysicalAddress::new(end - 1));
                     for frame in Frame::range_inclusive(start_frame, end_frame) {
-                        let page = Page::containing_address(VirtualAddress::new(frame.start_address().get() + ::KERNEL_OFFSET));
+                        let page =
+                            Page::containing_address(VirtualAddress::new(frame.start_address()
+                                .get() +
+                                                                         ::KERNEL_OFFSET));
                         mapper.map_to(page, frame, flags);
                     }
                 }
             };
 
             // Remap stack writable, no execute
-            remap(stack_start - ::KERNEL_OFFSET, stack_end - ::KERNEL_OFFSET, PRESENT | NO_EXECUTE | WRITABLE);
+            remap(stack_start - ::KERNEL_OFFSET,
+                  stack_end - ::KERNEL_OFFSET,
+                  PRESENT | NO_EXECUTE | WRITABLE);
 
             // Remap a section with `flags`
             let mut remap_section = |start: &u8, end: &u8, flags: EntryFlags| {
-                remap(start as *const _ as usize - ::KERNEL_OFFSET, end as *const _ as usize - ::KERNEL_OFFSET, flags);
+                remap(start as *const _ as usize - ::KERNEL_OFFSET,
+                      end as *const _ as usize - ::KERNEL_OFFSET,
+                      flags);
             };
             // Remap text read-only
-            remap_section(& __text_start, & __text_end, PRESENT);
+            remap_section(&__text_start, &__text_end, PRESENT);
             // Remap rodata read-only, no execute
-            remap_section(& __rodata_start, & __rodata_end, PRESENT | NO_EXECUTE);
+            remap_section(&__rodata_start, &__rodata_end, PRESENT | NO_EXECUTE);
             // Remap data writable, no execute
-            remap_section(& __data_start, & __data_end, PRESENT | NO_EXECUTE | WRITABLE);
+            remap_section(&__data_start, &__data_end, PRESENT | NO_EXECUTE | WRITABLE);
             // Remap tdata master writable, no execute
-            remap_section(& __tdata_start, & __tdata_end, PRESENT | NO_EXECUTE);
+            remap_section(&__tdata_start, &__tdata_end, PRESENT | NO_EXECUTE);
             // Remap bss writable, no execute
-            remap_section(& __bss_start, & __bss_end, PRESENT | NO_EXECUTE | WRITABLE);
+            remap_section(&__bss_start, &__bss_end, PRESENT | NO_EXECUTE | WRITABLE);
         }
     });
 
@@ -169,8 +181,12 @@ pub unsafe fn init(cpu_id: usize, stack_start: usize, stack_end: usize) -> (Acti
     (active_table, init_tcb(cpu_id))
 }
 
-pub unsafe fn init_ap(cpu_id: usize, stack_start: usize, stack_end: usize, kernel_table: usize) -> (ActivePageTable, usize) {
-    extern {
+pub unsafe fn init_ap(cpu_id: usize,
+                      stack_start: usize,
+                      stack_end: usize,
+                      kernel_table: usize)
+                      -> (ActivePageTable, usize) {
+    extern "C" {
         /// The starting byte of the thread data segment
         static mut __tdata_start: u8;
         /// The ending byte of the thread data segment
@@ -185,7 +201,8 @@ pub unsafe fn init_ap(cpu_id: usize, stack_start: usize, stack_end: usize, kerne
 
     let mut active_table = ActivePageTable::new();
 
-    let mut temporary_page = TemporaryPage::new(Page::containing_address(VirtualAddress::new(0x8_0000_0000)));
+    let mut temporary_page =
+        TemporaryPage::new(Page::containing_address(VirtualAddress::new(0x8_0000_0000)));
 
     let mut new_table = {
         let frame = allocate_frame().expect("no more frames in paging::init new_table");
@@ -199,7 +216,7 @@ pub unsafe fn init_ap(cpu_id: usize, stack_start: usize, stack_end: usize, kerne
 
         // Map tdata and tbss
         {
-            let size = & __tbss_end as *const _ as usize - & __tdata_start as *const _ as usize;
+            let size = &__tbss_end as *const _ as usize - &__tdata_start as *const _ as usize;
 
             let start = ::KERNEL_PERCPU_OFFSET + ::KERNEL_PERCPU_SIZE * cpu_id;
             let end = start + size;
@@ -216,14 +233,18 @@ pub unsafe fn init_ap(cpu_id: usize, stack_start: usize, stack_end: usize, kerne
                 let start_frame = Frame::containing_address(PhysicalAddress::new(start));
                 let end_frame = Frame::containing_address(PhysicalAddress::new(end - 1));
                 for frame in Frame::range_inclusive(start_frame, end_frame) {
-                    let page = Page::containing_address(VirtualAddress::new(frame.start_address().get() + ::KERNEL_OFFSET));
+                    let page = Page::containing_address(VirtualAddress::new(frame.start_address()
+                        .get() +
+                                                                            ::KERNEL_OFFSET));
                     mapper.map_to(page, frame, flags);
                 }
             }
         };
 
         // Remap stack writable, no execute
-        remap(stack_start - ::KERNEL_OFFSET, stack_end - ::KERNEL_OFFSET, PRESENT | NO_EXECUTE | WRITABLE);
+        remap(stack_start - ::KERNEL_OFFSET,
+              stack_end - ::KERNEL_OFFSET,
+              PRESENT | NO_EXECUTE | WRITABLE);
     });
 
     active_table.switch(new_table);
@@ -251,18 +272,16 @@ impl DerefMut for ActivePageTable {
 
 impl ActivePageTable {
     pub unsafe fn new() -> ActivePageTable {
-        ActivePageTable {
-            mapper: Mapper::new(),
-        }
+        ActivePageTable { mapper: Mapper::new() }
     }
 
     pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
         use x86::controlregs;
 
         let old_table = InactivePageTable {
-            p4_frame: Frame::containing_address(
-                PhysicalAddress::new(unsafe { controlregs::cr3() } as usize)
-            ),
+            p4_frame: Frame::containing_address(PhysicalAddress::new(unsafe {
+                controlregs::cr3()
+            } as usize)),
         };
         unsafe {
             controlregs::cr3_write(new_table.p4_frame.start_address().get() as u64);
@@ -271,20 +290,29 @@ impl ActivePageTable {
     }
 
     pub fn flush(&mut self, page: Page) {
-        unsafe { tlb::flush(page.start_address().get()); }
+        unsafe {
+            tlb::flush(page.start_address().get());
+        }
     }
 
     pub fn flush_all(&mut self) {
-        unsafe { tlb::flush_all(); }
+        unsafe {
+            tlb::flush_all();
+        }
     }
 
-    pub fn with<F>(&mut self, table: &mut InactivePageTable, temporary_page: &mut temporary_page::TemporaryPage, f: F)
+    pub fn with<F>(&mut self,
+                   table: &mut InactivePageTable,
+                   temporary_page: &mut temporary_page::TemporaryPage,
+                   f: F)
         where F: FnOnce(&mut Mapper)
     {
         use x86::controlregs;
 
         {
-            let backup = Frame::containing_address(PhysicalAddress::new(unsafe { controlregs::cr3() as usize }));
+            let backup = Frame::containing_address(PhysicalAddress::new(unsafe {
+                controlregs::cr3() as usize
+            }));
 
             // map temporary_page to current p4 table
             let p4_table = temporary_page.map_table_frame(backup.clone(), PRESENT | WRITABLE | NO_EXECUTE, self);
@@ -315,7 +343,10 @@ pub struct InactivePageTable {
 }
 
 impl InactivePageTable {
-    pub fn new(frame: Frame, active_table: &mut ActivePageTable, temporary_page: &mut TemporaryPage) -> InactivePageTable {
+    pub fn new(frame: Frame,
+               active_table: &mut ActivePageTable,
+               temporary_page: &mut TemporaryPage)
+               -> InactivePageTable {
         {
             let table = temporary_page.map_table_frame(frame.clone(), PRESENT | WRITABLE | NO_EXECUTE, active_table);
             // now we are able to zero the table
@@ -368,7 +399,7 @@ impl VirtualAddress {
 /// Page
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Page {
-    number: usize
+    number: usize,
 }
 
 impl Page {
@@ -393,7 +424,7 @@ impl Page {
     }
 
     pub fn containing_address(address: VirtualAddress) -> Page {
-        //TODO assert!(address.get() < 0x0000_8000_0000_0000 || address.get() >= 0xffff_8000_0000_0000,
+        // TODO assert!(address.get() < 0x0000_8000_0000_0000 || address.get() >= 0xffff_8000_0000_0000,
         //    "invalid address: 0x{:x}", address.get());
         Page { number: address.get() / PAGE_SIZE }
     }

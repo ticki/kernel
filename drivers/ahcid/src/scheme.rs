@@ -3,14 +3,15 @@ use std::{cmp, str};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use spin::Mutex;
-use syscall::{Error, EBADF, EINVAL, ENOENT, Result, Scheme, Stat, MODE_FILE, SEEK_CUR, SEEK_END, SEEK_SET};
+use syscall::{Error, EBADF, EINVAL, ENOENT, Result, Scheme, Stat, MODE_FILE, SEEK_CUR, SEEK_END,
+              SEEK_SET};
 
 use ahci::disk::Disk;
 
 pub struct DiskScheme {
     disks: Box<[Arc<Mutex<Disk>>]>,
     handles: Mutex<BTreeMap<usize, (Arc<Mutex<Disk>>, usize)>>,
-    next_id: AtomicUsize
+    next_id: AtomicUsize,
 }
 
 impl DiskScheme {
@@ -23,7 +24,7 @@ impl DiskScheme {
         DiskScheme {
             disks: disk_arcs.into_boxed_slice(),
             handles: Mutex::new(BTreeMap::new()),
-            next_id: AtomicUsize::new(0)
+            next_id: AtomicUsize::new(0),
         }
     }
 }
@@ -69,7 +70,7 @@ impl Scheme for DiskScheme {
         let mut handle = handles.get_mut(&id).ok_or(Error::new(EBADF))?;
 
         let mut disk = handle.0.lock();
-        let count = disk.read((handle.1 as u64)/512, buf)?;
+        let count = disk.read((handle.1 as u64) / 512, buf)?;
         handle.1 += count;
         Ok(count)
     }
@@ -79,7 +80,7 @@ impl Scheme for DiskScheme {
         let mut handle = handles.get_mut(&id).ok_or(Error::new(EBADF))?;
 
         let mut disk = handle.0.lock();
-        let count = disk.write((handle.1 as u64)/512, buf)?;
+        let count = disk.write((handle.1 as u64) / 512, buf)?;
         handle.1 += count;
         Ok(count)
     }
@@ -91,9 +92,11 @@ impl Scheme for DiskScheme {
         let len = handle.0.lock().size() as usize;
         handle.1 = match whence {
             SEEK_SET => cmp::min(len, pos),
-            SEEK_CUR => cmp::max(0, cmp::min(len as isize, handle.1 as isize + pos as isize)) as usize,
+            SEEK_CUR => {
+                cmp::max(0, cmp::min(len as isize, handle.1 as isize + pos as isize)) as usize
+            }
             SEEK_END => cmp::max(0, cmp::min(len as isize, len as isize + pos as isize)) as usize,
-            _ => return Err(Error::new(EINVAL))
+            _ => return Err(Error::new(EINVAL)),
         };
 
         Ok(handle.1)

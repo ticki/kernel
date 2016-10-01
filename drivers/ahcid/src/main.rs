@@ -32,7 +32,8 @@ fn main() {
             asm!("cli" :::: "intel", "volatile");
         }
 
-        let address = unsafe { physmap(bar, 4096, MAP_WRITE).expect("ahcid: failed to map address") };
+        let address =
+            unsafe { physmap(bar, 4096, MAP_WRITE).expect("ahcid: failed to map address") };
         {
             let mut socket = File::create(":disk").expect("ahcid: failed to create disk scheme");
             let scheme = DiskScheme::new(ahci::disks(address, irq));
@@ -43,6 +44,8 @@ fn main() {
                 socket.write(&mut packet).expect("ahcid: failed to read disk scheme");
             }
         }
-        unsafe { let _ = physunmap(address); }
+        unsafe {
+            let _ = physunmap(address);
+        }
     });
 }

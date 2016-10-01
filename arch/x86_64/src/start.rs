@@ -30,7 +30,7 @@ pub static AP_READY: AtomicBool = ATOMIC_BOOL_INIT;
 static BSP_READY: AtomicBool = ATOMIC_BOOL_INIT;
 static KERNEL_TABLE: AtomicUsize = ATOMIC_USIZE_INIT;
 
-extern {
+extern "C" {
     /// Kernel main function
     fn kmain() -> !;
     /// Kernel main for APs
@@ -39,9 +39,9 @@ extern {
 
 /// The entry to Rust, all things must be initialized
 #[no_mangle]
-pub unsafe extern fn kstart() -> ! {
+pub unsafe extern "C" fn kstart() -> ! {
     {
-        extern {
+        extern "C" {
             /// The starting byte of the _.bss_ (uninitialized data) segment.
             static mut __bss_start: u8;
             /// The ending byte of the _.bss_ (uninitialized data) segment.
@@ -53,7 +53,7 @@ pub unsafe extern fn kstart() -> ! {
         // Zero BSS, this initializes statics that are set to 0
         {
             let start_ptr = &mut __bss_start as *mut u8;
-            let end_ptr = & __bss_end as *const u8 as usize;
+            let end_ptr = &__bss_end as *const u8 as usize;
 
             if start_ptr as usize <= end_ptr {
                 let size = end_ptr - start_ptr as usize;
@@ -98,8 +98,12 @@ pub unsafe extern fn kstart() -> ! {
         // Setup kernel heap
         {
             // Map heap pages
-            let heap_start_page = Page::containing_address(VirtualAddress::new(::KERNEL_HEAP_OFFSET));
-            let heap_end_page = Page::containing_address(VirtualAddress::new(::KERNEL_HEAP_OFFSET + ::KERNEL_HEAP_SIZE-1));
+            let heap_start_page =
+                Page::containing_address(VirtualAddress::new(::KERNEL_HEAP_OFFSET));
+            let heap_end_page =
+                Page::containing_address(VirtualAddress::new(::KERNEL_HEAP_OFFSET +
+                                                             ::KERNEL_HEAP_SIZE -
+                                                             1));
             for page in Page::range_inclusive(heap_start_page, heap_end_page) {
                 active_table.map(page, entry::WRITABLE | entry::NO_EXECUTE);
             }
@@ -136,7 +140,11 @@ pub unsafe extern fn kstart() -> ! {
 }
 
 /// Entry to rust for an AP
-pub unsafe extern fn kstart_ap(cpu_id: usize, _page_table: usize, stack_start: usize, stack_end: usize) -> ! {
+pub unsafe extern "C" fn kstart_ap(cpu_id: usize,
+                                   _page_table: usize,
+                                   stack_start: usize,
+                                   stack_end: usize)
+                                   -> ! {
     {
         assert_eq!(BSS_TEST_ZERO, 0);
         assert_eq!(DATA_TEST_NONZERO, 0xFFFFFFFFFFFFFFFF);
@@ -148,7 +156,8 @@ pub unsafe extern fn kstart_ap(cpu_id: usize, _page_table: usize, stack_start: u
         let kernel_table = KERNEL_TABLE.load(Ordering::SeqCst);
 
         // Initialize paging
-        let (active_table, tcb_offset) = paging::init_ap(cpu_id, stack_start, stack_end, kernel_table);
+        let (active_table, tcb_offset) =
+            paging::init_ap(cpu_id, stack_start, stack_end, kernel_table);
 
         // Set up GDT for AP
         gdt::init(tcb_offset, stack_end);
@@ -169,7 +178,7 @@ pub unsafe extern fn kstart_ap(cpu_id: usize, _page_table: usize, stack_start: u
         AP_READY.store(true, Ordering::SeqCst);
     }
 
-    while ! BSP_READY.load(Ordering::SeqCst) {
+    while !BSP_READY.load(Ordering::SeqCst) {
         interrupt::pause();
     }
 

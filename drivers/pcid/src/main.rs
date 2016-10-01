@@ -50,41 +50,47 @@ fn main() {
                         let pci_class = PciClass::from(header.class);
                         print!(" {:?}", pci_class);
                         match pci_class {
-                            PciClass::Storage => match header.subclass {
-                                0x01 => {
-                                    print!(" IDE");
-                                },
-                                0x06 => {
-                                    print!(" SATA");
-                                },
-                                _ => ()
-                            },
-                            PciClass::SerialBus => match header.subclass {
-                                0x03 => match header.interface {
-                                    0x00 => {
-                                        print!(" UHCI");
-                                    },
-                                    0x10 => {
-                                        print!(" OHCI");
-                                    },
-                                    0x20 => {
-                                        print!(" EHCI");
-                                    },
-                                    0x30 => {
-                                        print!(" XHCI");
-                                    },
-                                    _ => ()
-                                },
-                                _ => ()
-                            },
-                            _ => ()
+                            PciClass::Storage => {
+                                match header.subclass {
+                                    0x01 => {
+                                        print!(" IDE");
+                                    }
+                                    0x06 => {
+                                        print!(" SATA");
+                                    }
+                                    _ => (),
+                                }
+                            }
+                            PciClass::SerialBus => {
+                                match header.subclass {
+                                    0x03 => {
+                                        match header.interface {
+                                            0x00 => {
+                                                print!(" UHCI");
+                                            }
+                                            0x10 => {
+                                                print!(" OHCI");
+                                            }
+                                            0x20 => {
+                                                print!(" EHCI");
+                                            }
+                                            0x30 => {
+                                                print!(" XHCI");
+                                            }
+                                            _ => (),
+                                        }
+                                    }
+                                    _ => (),
+                                }
+                            }
+                            _ => (),
                         }
 
                         for i in 0..header.bars.len() {
                             match PciBar::from(header.bars[i]) {
                                 PciBar::None => (),
                                 PciBar::Memory(address) => print!(" {}={:>08X}", i, address),
-                                PciBar::Port(address) => print!(" {}={:>04X}", i, address)
+                                PciBar::Port(address) => print!(" {}={:>04X}", i, address),
                             }
                         }
 
@@ -92,19 +98,27 @@ fn main() {
 
                         for driver in config.drivers.iter() {
                             if let Some(class) = driver.class {
-                                if class != header.class { continue; }
+                                if class != header.class {
+                                    continue;
+                                }
                             }
 
                             if let Some(subclass) = driver.subclass {
-                                if subclass != header.subclass { continue; }
+                                if subclass != header.subclass {
+                                    continue;
+                                }
                             }
 
                             if let Some(vendor) = driver.vendor {
-                                if vendor != header.vendor_id { continue; }
+                                if vendor != header.vendor_id {
+                                    continue;
+                                }
                             }
 
                             if let Some(device) = driver.device {
-                                if device != header.device_id { continue; }
+                                if device != header.device_id {
+                                    continue;
+                                }
                             }
 
                             if let Some(ref args) = driver.command {
@@ -115,8 +129,12 @@ fn main() {
                                         let bar_arg = |i| -> String {
                                             match PciBar::from(header.bars[i]) {
                                                 PciBar::None => String::new(),
-                                                PciBar::Memory(address) => format!("{:>08X}", address),
-                                                PciBar::Port(address) => format!("{:>04X}", address)
+                                                PciBar::Memory(address) => {
+                                                    format!("{:>08X}", address)
+                                                }
+                                                PciBar::Port(address) => {
+                                                    format!("{:>04X}", address)
+                                                }
                                             }
                                         };
                                         let arg = match arg.as_str() {
@@ -127,17 +145,19 @@ fn main() {
                                             "$BAR4" => bar_arg(4),
                                             "$BAR5" => bar_arg(5),
                                             "$IRQ" => format!("{}", header.interrupt_line),
-                                            _ => arg.clone()
+                                            _ => arg.clone(),
                                         };
                                         command.arg(&arg);
                                     }
 
                                     match command.spawn() {
-                                        Ok(mut child) => match child.wait() {
-                                            Ok(_status) => (), //println!("pcid: waited for {}: {:?}", line, status.code()),
-                                            Err(err) => println!("pcid: failed to wait for {:?}: {}", command, err)
-                                        },
-                                        Err(err) => println!("pcid: failed to execute {:?}: {}", command, err)
+                                        Ok(mut child) => {
+                                            match child.wait() {
+                                                Ok(_status) => (), //println!("pcid: waited for {}: {:?}", line, status.code()),
+                                                Err(err) => println!("pcid: failed to wait for {:?}: {}", command, err),
+                                            }
+                                        }
+                                        Err(err) => println!("pcid: failed to execute {:?}: {}", command, err),
                                     }
                                 }
                             }

@@ -6,4 +6,3 @@ impl Context {
         Context
     }
 }
-

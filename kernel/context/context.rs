@@ -12,7 +12,7 @@ use super::memory::{Grant, Memory, SharedMemory};
 pub enum Status {
     Runnable,
     Blocked,
-    Exited(usize)
+    Exited(usize),
 }
 
 /// A context, which identifies either a process or a thread
@@ -49,7 +49,7 @@ pub struct Context {
     /// The process environment
     pub env: Arc<Mutex<BTreeMap<Box<[u8]>, Arc<Mutex<Vec<u8>>>>>>,
     /// The open files in the scheme
-    pub files: Arc<Mutex<Vec<Option<File>>>>
+    pub files: Arc<Mutex<Vec<Option<File>>>>,
 }
 
 impl Context {
@@ -71,7 +71,7 @@ impl Context {
             cwd: Arc::new(Mutex::new(Vec::new())),
             events: Arc::new(Mutex::new(VecDeque::new())),
             env: Arc::new(Mutex::new(BTreeMap::new())),
-            files: Arc::new(Mutex::new(Vec::new()))
+            files: Arc::new(Mutex::new(Vec::new())),
         }
     }
 
@@ -82,27 +82,30 @@ impl Context {
                 cwd.clone()
             } else if path == b".." {
                 cwd[..cwd[..cwd.len() - 1]
-                                   .iter().rposition(|&b| b == b'/' || b == b':')
-                                   .map_or(cwd.len(), |i| i + 1)]
-                   .to_vec()
+                        .iter()
+                        .rposition(|&b| b == b'/' || b == b':')
+                        .map_or(cwd.len(), |i| i + 1)]
+                    .to_vec()
             } else if path.starts_with(b"./") {
                 let mut canon = cwd.clone();
                 canon.extend_from_slice(&path[2..]);
                 canon
             } else if path.starts_with(b"../") {
                 let mut canon = cwd[..cwd[..cwd.len() - 1]
-                                   .iter().rposition(|&b| b == b'/' || b == b':')
-                                   .map_or(cwd.len(), |i| i + 1)]
-                   .to_vec();
+                        .iter()
+                        .rposition(|&b| b == b'/' || b == b':')
+                        .map_or(cwd.len(), |i| i + 1)]
+                    .to_vec();
                 canon.extend_from_slice(&path[3..]);
                 canon
             } else if path.starts_with(b"/") {
-                let mut canon = cwd[..cwd.iter().position(|&b| b == b':').map_or(1, |i| i + 1)].to_vec();
+                let mut canon = cwd[..cwd.iter().position(|&b| b == b':').map_or(1, |i| i + 1)]
+                    .to_vec();
                 canon.extend_from_slice(&path);
                 canon
             } else {
                 let mut canon = cwd.clone();
-                if ! canon.ends_with(b"/") {
+                if !canon.ends_with(b"/") {
                     canon.push(b'/');
                 }
                 canon.extend_from_slice(&path);
@@ -135,11 +138,7 @@ impl Context {
     /// Get a file
     pub fn get_file(&self, i: usize) -> Option<File> {
         let files = self.files.lock();
-        if i < files.len() {
-            files[i]
-        } else {
-            None
-        }
+        if i < files.len() { files[i] } else { None }
     }
 
     /// Remove a file

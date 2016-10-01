@@ -35,9 +35,7 @@ pub fn register(fd: usize, scheme_id: usize, id: usize) -> bool {
     };
 
     let mut registry = registry_mut();
-    let entry = registry.entry((scheme_id, id)).or_insert_with(|| {
-        BTreeMap::new()
-    });
+    let entry = registry.entry((scheme_id, id)).or_insert_with(|| BTreeMap::new());
     if entry.contains_key(&(context_id, fd)) {
         false
     } else {
@@ -72,7 +70,7 @@ pub fn trigger(scheme_id: usize, id: usize, flags: usize, data: usize) {
                 event_list.push_back(Event {
                     id: (entry.0).1,
                     flags: flags,
-                    data: data
+                    data: data,
                 });
             }
         }

@@ -36,41 +36,51 @@ pub fn keyboard() {
                 rshift = pressed;
             } else if pressed {
                 match scancode {
-                    0x47 => { // Home
+                    0x47 => {
+                        // Home
                         input.write(b"\x1B[H").unwrap();
-                    },
-                    0x48 => { // Up
+                    }
+                    0x48 => {
+                        // Up
                         input.write(b"\x1B[A").unwrap();
-                    },
-                    0x49 => { // Page up
+                    }
+                    0x49 => {
+                        // Page up
                         input.write(b"\x1B[5~").unwrap();
-                    },
-                    0x4B => { // Left
+                    }
+                    0x4B => {
+                        // Left
                         input.write(b"\x1B[D").unwrap();
-                    },
-                    0x4D => { // Right
+                    }
+                    0x4D => {
+                        // Right
                         input.write(b"\x1B[C").unwrap();
-                    },
-                    0x4F => { // End
+                    }
+                    0x4F => {
+                        // End
                         input.write(b"\x1B[F").unwrap();
-                    },
-                    0x50 => { // Down
+                    }
+                    0x50 => {
+                        // Down
                         input.write(b"\x1B[B").unwrap();
-                    },
-                    0x51 => { // Page down
+                    }
+                    0x51 => {
+                        // Page down
                         input.write(b"\x1B[6~").unwrap();
-                    },
-                    0x52 => { // Insert
+                    }
+                    0x52 => {
+                        // Insert
                         input.write(b"\x1B[2~").unwrap();
-                    },
-                    0x53 => { // Delete
+                    }
+                    0x53 => {
+                        // Delete
                         input.write(b"\x1B[3~").unwrap();
-                    },
+                    }
                     _ => {
                         let c = if ctrl {
                             match keymap::get_char(scancode, false) {
-                                c @ 'a' ... 'z' => (c as u8 - b'a' + b'\x01') as char,
-                                c => c
+                                c @ 'a'...'z' => (c as u8 - b'a' + b'\x01') as char,
+                                c => c,
                             }
                         } else {
                             keymap::get_char(scancode, lshift || rshift)

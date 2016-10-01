@@ -29,7 +29,7 @@ pub struct Context {
     /// Base pointer
     rbp: usize,
     /// Stack pointer
-    rsp: usize
+    rsp: usize,
 }
 
 impl Context {
@@ -45,7 +45,7 @@ impl Context {
             r14: 0,
             r15: 0,
             rbp: 0,
-            rsp: 0
+            rsp: 0,
         }
     }
 
@@ -74,7 +74,7 @@ impl Context {
         self.loadable = true;
         if next.loadable {
             asm!("fxrstor [$0]" : : "r"(next.fx) : "memory" : "intel", "volatile");
-        }else{
+        } else {
             asm!("fninit" : : : "memory" : "intel", "volatile");
         }
 
@@ -113,6 +113,6 @@ impl Context {
 
 /// Unset global lock, set inside of kernel
 #[no_mangle]
-pub extern fn context_switch_unlock(){
+pub extern "C" fn context_switch_unlock() {
     CONTEXT_SWITCH_LOCK.store(false, Ordering::SeqCst);
 }

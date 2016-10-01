@@ -8,7 +8,7 @@ pub trait Io {
     fn write(&mut self, value: Self::Value);
 
     #[inline(always)]
-    fn readf(&self, flags: Self::Value) -> bool  {
+    fn readf(&self, flags: Self::Value) -> bool {
         (self.read() & flags) as Self::Value == flags
     }
 
@@ -23,14 +23,12 @@ pub trait Io {
 }
 
 pub struct ReadOnly<I: Io> {
-    inner: I
+    inner: I,
 }
 
 impl<I: Io> ReadOnly<I> {
     pub const fn new(inner: I) -> ReadOnly<I> {
-        ReadOnly {
-            inner: inner
-        }
+        ReadOnly { inner: inner }
     }
 
     #[inline(always)]
@@ -45,14 +43,12 @@ impl<I: Io> ReadOnly<I> {
 }
 
 pub struct WriteOnly<I: Io> {
-    inner: I
+    inner: I,
 }
 
 impl<I: Io> WriteOnly<I> {
     pub const fn new(inner: I) -> WriteOnly<I> {
-        WriteOnly {
-            inner: inner
-        }
+        WriteOnly { inner: inner }
     }
 
     #[inline(always)]

@@ -2,7 +2,7 @@
 pub enum PciBar {
     None,
     Memory(u32),
-    Port(u16)
+    Port(u16),
 }
 
 impl From<u32> for PciBar {

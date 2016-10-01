@@ -1,4 +1,4 @@
-///! Syscall handlers
+/// ! Syscall handlers
 
 extern crate syscall;
 
@@ -22,9 +22,23 @@ pub mod process;
 pub mod validate;
 
 #[no_mangle]
-pub extern fn syscall(a: usize, b: usize, c: usize, d: usize, e: usize, f: usize, stack: usize) -> usize {
+pub extern "C" fn syscall(a: usize,
+                          b: usize,
+                          c: usize,
+                          d: usize,
+                          e: usize,
+                          f: usize,
+                          stack: usize)
+                          -> usize {
     #[inline(always)]
-    fn inner(a: usize, b: usize, c: usize, d: usize, e: usize, _f: usize, stack: usize) -> Result<usize> {
+    fn inner(a: usize,
+             b: usize,
+             c: usize,
+             d: usize,
+             e: usize,
+             _f: usize,
+             stack: usize)
+             -> Result<usize> {
         match a {
             SYS_EXIT => exit(b),
             SYS_READ => read(b, validate_slice_mut(c as *mut u8, d)?),
@@ -33,7 +47,10 @@ pub extern fn syscall(a: usize, b: usize, c: usize, d: usize, e: usize, f: usize
             SYS_CLOSE => close(b),
             SYS_WAITPID => waitpid(b, c, d),
             SYS_UNLINK => unlink(validate_slice(b as *const u8, c)?),
-            SYS_EXECVE => exec(validate_slice(b as *const u8, c)?, validate_slice(d as *const [usize; 2], e)?),
+            SYS_EXECVE => {
+                exec(validate_slice(b as *const u8, c)?,
+                     validate_slice(d as *const [usize; 2], e)?)
+            }
             SYS_CHDIR => chdir(validate_slice(b as *const u8, c)?),
             SYS_LSEEK => lseek(b, c, d),
             SYS_GETPID => getpid(),

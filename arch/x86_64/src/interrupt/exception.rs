@@ -3,7 +3,9 @@ use super::{halt, stack_trace};
 interrupt!(divide_by_zero, {
     print!("Divide by zero fault\n");
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt!(debug, {
@@ -25,49 +27,65 @@ interrupt!(overflow, {
 interrupt!(bound_range, {
     print!("Bound range exceeded fault\n");
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt!(invalid_opcode, {
     print!("Invalid opcode fault\n");
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt!(device_not_available, {
     print!("Device not available fault\n");
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt_error!(double_fault, {
     print!("Double fault\n");
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt_error!(invalid_tss, {
     print!("Invalid TSS fault\n");
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt_error!(segment_not_present, {
     print!("Segment not present fault\n");
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt_error!(stack_segment, {
     print!("Stack segment fault\n");
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt_error!(protection, {
     print!("Protection fault\n");
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt_error!(page, {
@@ -75,7 +93,9 @@ interrupt_error!(page, {
     asm!("mov rax, cr2" : "={rax}"(cr2) : : : "intel", "volatile");
     println!("Page fault: {:>016X}", cr2);
     stack_trace();
-    loop { halt(); }
+    loop {
+        halt();
+    }
 });
 
 interrupt!(fpu, {

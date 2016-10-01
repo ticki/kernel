@@ -12,22 +12,44 @@ pub struct Disk {
     clb: Dma<[HbaCmdHeader; 32]>,
     ctbas: [Dma<HbaCmdTable>; 32],
     fb: Dma<[u8; 256]>,
-    buf: Dma<[u8; 256 * 512]>
+    buf: Dma<[u8; 256 * 512]>,
 }
 
 impl Disk {
     pub fn new(id: usize, port: &'static mut HbaPort) -> Result<Self> {
         let mut clb = Dma::zeroed()?;
-        let mut ctbas = [
-            Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?,
-            Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?,
-            Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?,
-            Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?,
-            Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?,
-            Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?,
-            Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?,
-            Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?, Dma::zeroed()?,
-        ];
+        let mut ctbas = [Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?,
+                         Dma::zeroed()?];
         let mut fb = Dma::zeroed()?;
         let buf = Dma::zeroed()?;
 
@@ -42,7 +64,7 @@ impl Disk {
             clb: clb,
             ctbas: ctbas,
             fb: fb,
-            buf: buf
+            buf: buf,
         })
     }
 
@@ -55,24 +77,42 @@ impl Disk {
     }
 
     pub fn read(&mut self, block: u64, buffer: &mut [u8]) -> Result<usize> {
-        let sectors = buffer.len()/512;
+        let sectors = buffer.len() / 512;
 
         let mut sector: usize = 0;
         while sectors - sector >= 255 {
-            if let Err(err) = self.port.ata_dma(block + sector as u64, 255, false, &mut self.clb, &mut self.ctbas, &mut self.buf) {
+            if let Err(err) = self.port.ata_dma(block + sector as u64,
+                                                255,
+                                                false,
+                                                &mut self.clb,
+                                                &mut self.ctbas,
+                                                &mut self.buf) {
                 return Err(err);
             }
 
-            unsafe { ptr::copy(self.buf.as_ptr(), buffer.as_mut_ptr().offset(sector as isize * 512), 255 * 512); }
+            unsafe {
+                ptr::copy(self.buf.as_ptr(),
+                          buffer.as_mut_ptr().offset(sector as isize * 512),
+                          255 * 512);
+            }
 
             sector += 255;
         }
         if sector < sectors {
-            if let Err(err) = self.port.ata_dma(block + sector as u64, sectors - sector, false, &mut self.clb, &mut self.ctbas, &mut self.buf) {
+            if let Err(err) = self.port.ata_dma(block + sector as u64,
+                                                sectors - sector,
+                                                false,
+                                                &mut self.clb,
+                                                &mut self.ctbas,
+                                                &mut self.buf) {
                 return Err(err);
             }
 
-            unsafe { ptr::copy(self.buf.as_ptr(), buffer.as_mut_ptr().offset(sector as isize * 512), (sectors - sector) * 512); }
+            unsafe {
+                ptr::copy(self.buf.as_ptr(),
+                          buffer.as_mut_ptr().offset(sector as isize * 512),
+                          (sectors - sector) * 512);
+            }
 
             sector += sectors - sector;
         }
@@ -81,22 +121,40 @@ impl Disk {
     }
 
     pub fn write(&mut self, block: u64, buffer: &[u8]) -> Result<usize> {
-        let sectors = buffer.len()/512;
+        let sectors = buffer.len() / 512;
 
         let mut sector: usize = 0;
         while sectors - sector >= 255 {
-            unsafe { ptr::copy(buffer.as_ptr().offset(sector as isize * 512), self.buf.as_mut_ptr(), 255 * 512); }
+            unsafe {
+                ptr::copy(buffer.as_ptr().offset(sector as isize * 512),
+                          self.buf.as_mut_ptr(),
+                          255 * 512);
+            }
 
-            if let Err(err) = self.port.ata_dma(block + sector as u64, 255, true, &mut self.clb, &mut self.ctbas, &mut self.buf) {
+            if let Err(err) = self.port.ata_dma(block + sector as u64,
+                                                255,
+                                                true,
+                                                &mut self.clb,
+                                                &mut self.ctbas,
+                                                &mut self.buf) {
                 return Err(err);
             }
 
             sector += 255;
         }
         if sector < sectors {
-            unsafe { ptr::copy(buffer.as_ptr().offset(sector as isize * 512), self.buf.as_mut_ptr(), (sectors - sector) * 512); }
+            unsafe {
+                ptr::copy(buffer.as_ptr().offset(sector as isize * 512),
+                          self.buf.as_mut_ptr(),
+                          (sectors - sector) * 512);
+            }
 
-            if let Err(err) = self.port.ata_dma(block + sector as u64, sectors - sector, true, &mut self.clb, &mut self.ctbas, &mut self.buf) {
+            if let Err(err) = self.port.ata_dma(block + sector as u64,
+                                                sectors - sector,
+                                                true,
+                                                &mut self.clb,
+                                                &mut self.ctbas,
+                                                &mut self.buf) {
                 return Err(err);
             }
 

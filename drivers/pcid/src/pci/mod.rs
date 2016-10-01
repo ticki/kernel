@@ -25,7 +25,8 @@ impl Pci {
 
     #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
     pub unsafe fn read(&self, bus: u8, dev: u8, func: u8, offset: u8) -> u32 {
-        let address = 0x80000000 | ((bus as u32) << 16) | ((dev as u32) << 11) | ((func as u32) << 8) | ((offset as u32) & 0xFC);
+        let address = 0x80000000 | ((bus as u32) << 16) | ((dev as u32) << 11) |
+                      ((func as u32) << 8) | ((offset as u32) & 0xFC);
         let value: u32;
         asm!("mov dx, 0xCF8
             out dx, eax
@@ -38,15 +39,12 @@ impl Pci {
 
 pub struct PciIter<'pci> {
     pci: &'pci Pci,
-    num: u32
+    num: u32,
 }
 
 impl<'pci> PciIter<'pci> {
     pub fn new(pci: &'pci Pci) -> Self {
-        PciIter {
-            pci: pci,
-            num: 0
-        }
+        PciIter { pci: pci, num: 0 }
     }
 }
 
@@ -56,7 +54,7 @@ impl<'pci> Iterator for PciIter<'pci> {
         if self.num < 256 {
             let bus = PciBus {
                 pci: self.pci,
-                num: self.num as u8
+                num: self.num as u8,
             };
             self.num += 1;
             Some(bus)

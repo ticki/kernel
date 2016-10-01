@@ -2,13 +2,11 @@
 
 /// Clear interrupts
 #[inline(always)]
-pub unsafe fn disable() {
-}
+pub unsafe fn disable() {}
 
 /// Set interrupts
 #[inline(always)]
-pub unsafe fn enable() {
-}
+pub unsafe fn enable() {}
 
 /// Set interrupts and halt
 #[inline(always)]
@@ -19,12 +17,11 @@ pub unsafe fn enable_and_halt() {
 /// Halt instruction
 #[inline(always)]
 pub unsafe fn halt() {
-    //asm!("wfi" : : : : "volatile");
+    // asm!("wfi" : : : : "volatile");
     asm!("nop" : : : : "volatile");
 }
 
 /// Get a stack trace
-//TODO: Check for stack being mapped before dereferencing
+// TODO: Check for stack being mapped before dereferencing
 #[inline(never)]
-pub unsafe fn stack_trace() {
-}
+pub unsafe fn stack_trace() {}

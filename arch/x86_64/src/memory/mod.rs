@@ -11,7 +11,12 @@ pub mod area_frame_allocator;
 
 /// The current memory map. It's size is maxed out to 512 entries, due to it being
 /// from 0x500 to 0x5000 (800 is the absolute total)
-static mut MEMORY_MAP: [MemoryArea; 512] = [MemoryArea { base_addr: 0, length: 0, _type: 0, acpi: 0 }; 512];
+static mut MEMORY_MAP: [MemoryArea; 512] = [MemoryArea {
+    base_addr: 0,
+    length: 0,
+    _type: 0,
+    acpi: 0,
+}; 512];
 
 /// Memory does not exist
 pub const MEMORY_AREA_NULL: u32 = 0;
@@ -28,14 +33,14 @@ pub const MEMORY_AREA_ACPI: u32 = 3;
 #[derive(Clone)]
 pub struct MemoryAreaIter {
     _type: u32,
-    i: usize
+    i: usize,
 }
 
 impl MemoryAreaIter {
     fn new(_type: u32) -> Self {
         MemoryAreaIter {
             _type: _type,
-            i: 0
+            i: 0,
         }
     }
 }
@@ -64,7 +69,9 @@ pub unsafe fn init(kernel_start: usize, kernel_end: usize) {
         *entry = *(0x500 as *const MemoryArea).offset(i as isize);
     }
 
-    *ALLOCATOR.lock() = Some(AreaFrameAllocator::new(kernel_start, kernel_end, MemoryAreaIter::new(MEMORY_AREA_FREE)));
+    *ALLOCATOR.lock() = Some(AreaFrameAllocator::new(kernel_start,
+                                                     kernel_end,
+                                                     MemoryAreaIter::new(MEMORY_AREA_FREE)));
 }
 
 /// Allocate a frame
@@ -102,14 +109,14 @@ pub struct MemoryArea {
     pub base_addr: u64,
     pub length: u64,
     pub _type: u32,
-    pub acpi: u32
+    pub acpi: u32,
 }
 
 /// A frame, allocated by the frame allocator.
 /// Do not add more derives, or make anything `pub`!
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Frame {
-    number: usize
+    number: usize,
 }
 
 impl Frame {
@@ -118,21 +125,17 @@ impl Frame {
         PhysicalAddress::new(self.number * PAGE_SIZE)
     }
 
-    //TODO: Set private
+    // TODO: Set private
     pub fn clone(&self) -> Frame {
-        Frame {
-            number: self.number
-        }
+        Frame { number: self.number }
     }
 
     /// Create a frame containing `address`
     pub fn containing_address(address: PhysicalAddress) -> Frame {
-        Frame {
-            number: address.get() / PAGE_SIZE
-        }
+        Frame { number: address.get() / PAGE_SIZE }
     }
 
-    //TODO: Set private
+    // TODO: Set private
     pub fn range_inclusive(start: Frame, end: Frame) -> FrameIter {
         FrameIter {
             start: start,

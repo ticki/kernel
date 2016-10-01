@@ -43,7 +43,7 @@ enum Command {
     Diagnostic = 0xAC,
     DisableFirst = 0xAD,
     EnableFirst = 0xAE,
-    WriteSecond = 0xD4
+    WriteSecond = 0xD4,
 }
 
 #[repr(u8)]
@@ -51,12 +51,12 @@ enum Command {
 enum KeyboardCommand {
     EnableReporting = 0xF4,
     SetDefaults = 0xF6,
-    Reset = 0xFF
+    Reset = 0xFF,
 }
 
 #[repr(u8)]
 enum KeyboardCommandData {
-    ScancodeSet = 0xF0
+    ScancodeSet = 0xF0,
 }
 
 #[repr(u8)]
@@ -65,7 +65,7 @@ enum MouseCommand {
     GetDeviceId = 0xF2,
     EnableReporting = 0xF4,
     SetDefaults = 0xF6,
-    Reset = 0xFF
+    Reset = 0xFF,
 }
 
 #[repr(u8)]
@@ -76,7 +76,7 @@ enum MouseCommandData {
 pub struct Ps2 {
     data: Pio<u8>,
     status: ReadOnly<Pio<u8>>,
-    command: WriteOnly<Pio<u8>>
+    command: WriteOnly<Pio<u8>>,
 }
 
 impl Ps2 {
@@ -97,7 +97,7 @@ impl Ps2 {
     }
 
     fn wait_read(&mut self) {
-        while ! self.status().contains(OUTPUT_FULL) {}
+        while !self.status().contains(OUTPUT_FULL) {}
     }
 
     fn flush_read(&mut self) {
@@ -191,7 +191,8 @@ impl Ps2 {
         self.flush_read();
 
         // Set scancode set to 2
-        assert_eq!(self.keyboard_command_data(KeyboardCommandData::ScancodeSet, 2), 0xFA);
+        assert_eq!(self.keyboard_command_data(KeyboardCommandData::ScancodeSet, 2),
+                   0xFA);
 
         // Reset mouse and set up scroll
         // TODO: Check for ack
@@ -201,18 +202,23 @@ impl Ps2 {
         self.flush_read();
 
         // Enable extra packet on mouse
-        assert_eq!(self.mouse_command_data(MouseCommandData::SetSampleRate, 200), 0xFA);
-        assert_eq!(self.mouse_command_data(MouseCommandData::SetSampleRate, 100), 0xFA);
-        assert_eq!(self.mouse_command_data(MouseCommandData::SetSampleRate, 80), 0xFA);
+        assert_eq!(self.mouse_command_data(MouseCommandData::SetSampleRate, 200),
+                   0xFA);
+        assert_eq!(self.mouse_command_data(MouseCommandData::SetSampleRate, 100),
+                   0xFA);
+        assert_eq!(self.mouse_command_data(MouseCommandData::SetSampleRate, 80),
+                   0xFA);
         assert_eq!(self.mouse_command(MouseCommand::GetDeviceId), 0xFA);
         let mouse_id = self.read();
         let mouse_extra = mouse_id == 3;
 
         // Set sample rate to maximum
-        assert_eq!(self.mouse_command_data(MouseCommandData::SetSampleRate, 200), 0xFA);
+        assert_eq!(self.mouse_command_data(MouseCommandData::SetSampleRate, 200),
+                   0xFA);
 
         // Enable data reporting
-        assert_eq!(self.keyboard_command(KeyboardCommand::EnableReporting), 0xFA);
+        assert_eq!(self.keyboard_command(KeyboardCommand::EnableReporting),
+                   0xFA);
         assert_eq!(self.mouse_command(MouseCommand::EnableReporting), 0xFA);
 
         // Enable clocks and interrupts

@@ -1,6 +1,6 @@
 #[derive(Debug, Default, RustcDecodable)]
 pub struct Config {
-    pub drivers: Vec<DriverConfig>
+    pub drivers: Vec<DriverConfig>,
 }
 
 #[derive(Debug, Default, RustcDecodable)]
@@ -10,5 +10,5 @@ pub struct DriverConfig {
     pub subclass: Option<u8>,
     pub vendor: Option<u16>,
     pub device: Option<u16>,
-    pub command: Option<Vec<String>>
+    pub command: Option<Vec<String>>,
 }

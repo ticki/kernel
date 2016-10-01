@@ -57,9 +57,10 @@ pub fn open(path: &[u8], flags: usize) -> Result<usize> {
     let context_lock = contexts.current().ok_or(Error::new(ESRCH))?;
     let context = context_lock.read();
     context.add_file(::context::file::File {
-        scheme: scheme_id,
-        number: file_id
-    }).ok_or(Error::new(EMFILE))
+            scheme: scheme_id,
+            number: file_id,
+        })
+        .ok_or(Error::new(EMFILE))
 }
 
 /// mkdir syscall
@@ -171,9 +172,10 @@ pub fn dup(fd: usize) -> Result<usize> {
     let context_lock = contexts.current().ok_or(Error::new(ESRCH))?;
     let context = context_lock.read();
     context.add_file(::context::file::File {
-        scheme: file.scheme,
-        number: new_id
-    }).ok_or(Error::new(EMFILE))
+            scheme: file.scheme,
+            number: new_id,
+        })
+        .ok_or(Error::new(EMFILE))
 }
 
 /// Register events for file

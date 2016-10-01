@@ -41,11 +41,13 @@ pub fn main() {
             stdout.write(b"\x1Bc").unwrap();
             let _ = stdout.flush();
             match Command::new("file:bin/login").spawn() {
-                Ok(mut child) => match child.wait() {
-                    Ok(_status) => (), //println!("getty: waited for login: {:?}", status.code()),
-                    Err(err) => panic!("getty: failed to wait for login: {}", err)
-                },
-                Err(err) => panic!("getty: failed to execute login: {}", err)
+                Ok(mut child) => {
+                    match child.wait() {
+                        Ok(_status) => (), //println!("getty: waited for login: {:?}", status.code()),
+                        Err(err) => panic!("getty: failed to wait for login: {}", err),
+                    }
+                }
+                Err(err) => panic!("getty: failed to execute login: {}", err),
             }
         }
     });

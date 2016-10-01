@@ -1,5 +1,5 @@
 pub mod serial;
 
-pub unsafe fn init(){
+pub unsafe fn init() {
     serial::init();
 }

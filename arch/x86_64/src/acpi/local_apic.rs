@@ -8,14 +8,14 @@ use paging::{entry, ActivePageTable, PhysicalAddress};
 /// Local APIC
 pub struct LocalApic {
     pub address: u32,
-    pub x2: bool
+    pub x2: bool,
 }
 
 impl LocalApic {
     pub fn new(active_table: &mut ActivePageTable) -> Self {
         let mut apic = LocalApic {
             address: (unsafe { rdmsr(IA32_APIC_BASE) as u32 } & 0xFFFF0000),
-            x2: false
+            x2: false,
         };
 
         if CpuId::new().get_feature_info().unwrap().has_x2apic() {
@@ -56,15 +56,15 @@ impl LocalApic {
         if self.x2 {
             unsafe { rdmsr(IA32_X2APIC_ICR) }
         } else {
-            unsafe {
-                (self.read(0x310) as u64) << 32 | self.read(0x300) as u64
-            }
+            unsafe { (self.read(0x310) as u64) << 32 | self.read(0x300) as u64 }
         }
     }
 
     pub fn set_icr(&mut self, value: u64) {
         if self.x2 {
-            unsafe { wrmsr(IA32_X2APIC_ICR, value); }
+            unsafe {
+                wrmsr(IA32_X2APIC_ICR, value);
+            }
         } else {
             unsafe {
                 while self.read(0x300) & 1 << 12 == 1 << 12 {}

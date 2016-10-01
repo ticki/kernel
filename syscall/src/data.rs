@@ -5,14 +5,15 @@ use core::{mem, slice};
 pub struct Event {
     pub id: usize,
     pub flags: usize,
-    pub data: usize
+    pub data: usize,
 }
 
 impl Deref for Event {
     type Target = [u8];
     fn deref(&self) -> &[u8] {
         unsafe {
-            slice::from_raw_parts(self as *const Event as *const u8, mem::size_of::<Event>()) as &[u8]
+            slice::from_raw_parts(self as *const Event as *const u8,
+                                  mem::size_of::<Event>()) as &[u8]
         }
     }
 }
@@ -20,7 +21,8 @@ impl Deref for Event {
 impl DerefMut for Event {
     fn deref_mut(&mut self) -> &mut [u8] {
         unsafe {
-            slice::from_raw_parts_mut(self as *mut Event as *mut u8, mem::size_of::<Event>()) as &mut [u8]
+            slice::from_raw_parts_mut(self as *mut Event as *mut u8,
+                                      mem::size_of::<Event>()) as &mut [u8]
         }
     }
 }
@@ -32,14 +34,15 @@ pub struct Packet {
     pub a: usize,
     pub b: usize,
     pub c: usize,
-    pub d: usize
+    pub d: usize,
 }
 
 impl Deref for Packet {
     type Target = [u8];
     fn deref(&self) -> &[u8] {
         unsafe {
-            slice::from_raw_parts(self as *const Packet as *const u8, mem::size_of::<Packet>()) as &[u8]
+            slice::from_raw_parts(self as *const Packet as *const u8,
+                                  mem::size_of::<Packet>()) as &[u8]
         }
     }
 }
@@ -47,7 +50,8 @@ impl Deref for Packet {
 impl DerefMut for Packet {
     fn deref_mut(&mut self) -> &mut [u8] {
         unsafe {
-            slice::from_raw_parts_mut(self as *mut Packet as *mut u8, mem::size_of::<Packet>()) as &mut [u8]
+            slice::from_raw_parts_mut(self as *mut Packet as *mut u8,
+                                      mem::size_of::<Packet>()) as &mut [u8]
         }
     }
 }
@@ -58,7 +62,7 @@ pub struct Stat {
     pub st_mode: u16,
     pub st_uid: u32,
     pub st_gid: u32,
-    pub st_size: u64
+    pub st_size: u64,
 }
 
 impl Deref for Stat {
@@ -73,7 +77,8 @@ impl Deref for Stat {
 impl DerefMut for Stat {
     fn deref_mut(&mut self) -> &mut [u8] {
         unsafe {
-            slice::from_raw_parts_mut(self as *mut Stat as *mut u8, mem::size_of::<Stat>()) as &mut [u8]
+            slice::from_raw_parts_mut(self as *mut Stat as *mut u8,
+                                      mem::size_of::<Stat>()) as &mut [u8]
         }
     }
 }

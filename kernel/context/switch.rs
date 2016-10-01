@@ -28,7 +28,7 @@ pub unsafe fn switch() -> bool {
     for (pid, context_lock) in contexts().iter() {
         if *pid > (*from_ptr).id {
             let mut context = context_lock.write();
-            if context.status == Status::Runnable && ! context.running {
+            if context.status == Status::Runnable && !context.running {
                 to_ptr = context.deref_mut() as *mut Context;
                 break;
             }
@@ -39,7 +39,7 @@ pub unsafe fn switch() -> bool {
         for (pid, context_lock) in contexts().iter() {
             if *pid < (*from_ptr).id {
                 let mut context = context_lock.write();
-                if context.status == Status::Runnable && ! context.running {
+                if context.status == Status::Runnable && !context.running {
                     to_ptr = context.deref_mut() as *mut Context;
                     break;
                 }
@@ -53,7 +53,7 @@ pub unsafe fn switch() -> bool {
         return false;
     }
 
-    //println!("Switch {} to {}", (&*from_ptr).id, (&*to_ptr).id);
+    // println!("Switch {} to {}", (&*from_ptr).id, (&*to_ptr).id);
 
     (&mut *from_ptr).running = false;
     (&mut *to_ptr).running = true;

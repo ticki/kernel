@@ -51,7 +51,13 @@ pub fn dup(fd: usize) -> Result<usize> {
 }
 
 pub fn execve(path: &str, args: &[[usize; 2]]) -> Result<usize> {
-    unsafe { syscall4(SYS_EXECVE, path.as_ptr() as usize, path.len(), args.as_ptr() as usize, args.len()) }
+    unsafe {
+        syscall4(SYS_EXECVE,
+                 path.as_ptr() as usize,
+                 path.len(),
+                 args.as_ptr() as usize,
+                 args.len())
+    }
 }
 
 pub fn exit(status: usize) -> Result<usize> {
@@ -78,8 +84,18 @@ pub fn ftruncate(fd: usize, len: usize) -> Result<usize> {
     unsafe { syscall2(SYS_FTRUNCATE, fd, len) }
 }
 
-pub unsafe fn futex(addr: *mut i32, op: usize, val: i32, val2: usize, addr2: *mut i32) -> Result<usize> {
-    syscall5(SYS_FUTEX, addr as usize, op, (val as isize) as usize, val2, addr2 as usize)
+pub unsafe fn futex(addr: *mut i32,
+                    op: usize,
+                    val: i32,
+                    val2: usize,
+                    addr2: *mut i32)
+                    -> Result<usize> {
+    syscall5(SYS_FUTEX,
+             addr as usize,
+             op,
+             (val as isize) as usize,
+             val2,
+             addr2 as usize)
 }
 
 pub fn getcwd(buf: &mut [u8]) -> Result<usize> {
@@ -107,7 +123,11 @@ pub fn mkdir(path: &str, mode: usize) -> Result<usize> {
 }
 
 pub fn nanosleep(req: &TimeSpec, rem: &mut TimeSpec) -> Result<usize> {
-    unsafe { syscall2(SYS_NANOSLEEP, req as *const TimeSpec as usize, rem as *mut TimeSpec as usize) }
+    unsafe {
+        syscall2(SYS_NANOSLEEP,
+                 req as *const TimeSpec as usize,
+                 rem as *mut TimeSpec as usize)
+    }
 }
 
 pub fn open(path: &str, flags: usize) -> Result<usize> {

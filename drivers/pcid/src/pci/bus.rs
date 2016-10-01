@@ -2,7 +2,7 @@ use super::{Pci, PciDev};
 
 pub struct PciBus<'pci> {
     pub pci: &'pci Pci,
-    pub num: u8
+    pub num: u8,
 }
 
 impl<'pci> PciBus<'pci> {
@@ -17,15 +17,12 @@ impl<'pci> PciBus<'pci> {
 
 pub struct PciBusIter<'pci> {
     bus: &'pci PciBus<'pci>,
-    num: u32
+    num: u32,
 }
 
 impl<'pci> PciBusIter<'pci> {
     pub fn new(bus: &'pci PciBus<'pci>) -> Self {
-        PciBusIter {
-            bus: bus,
-            num: 0
-        }
+        PciBusIter { bus: bus, num: 0 }
     }
 }
 
@@ -35,7 +32,7 @@ impl<'pci> Iterator for PciBusIter<'pci> {
         if self.num < 32 {
             let dev = PciDev {
                 bus: self.bus,
-                num: self.num as u8
+                num: self.num as u8,
             };
             self.num += 1;
             Some(dev)

@@ -59,7 +59,7 @@ impl SerialPort {
             line_ctrl: Pio::new(base + 3),
             modem_ctrl: Pio::new(base + 4),
             line_sts: ReadOnly::new(Pio::new(base + 5)),
-            modem_sts: ReadOnly::new(Pio::new(base + 6))
+            modem_sts: ReadOnly::new(Pio::new(base + 6)),
         }
     }
 
@@ -68,7 +68,7 @@ impl SerialPort {
     }
 
     fn write(&mut self, data: u8) {
-        while ! self.line_sts().contains(OUTPUT_EMPTY) {}
+        while !self.line_sts().contains(OUTPUT_EMPTY) {}
         self.data.write(data)
     }
 
@@ -78,10 +78,10 @@ impl SerialPort {
                 self.write(8);
                 self.write(b' ');
                 self.write(8);
-            },
+            }
             b'\r' => {
                 self.write(b'\n');
-            },
+            }
             _ => {
                 self.write(data);
             }
@@ -89,7 +89,7 @@ impl SerialPort {
     }
 
     fn init(&mut self) {
-        //TODO: Cleanup
+        // TODO: Cleanup
         self.int_en.write(0x00);
         self.line_ctrl.write(0x80);
         self.data.write(0x03);
@@ -103,7 +103,7 @@ impl SerialPort {
     pub fn on_receive(&mut self) {
         let data = self.data.read();
 
-        extern {
+        extern "C" {
             fn debug_input(byte: u8);
         }
 

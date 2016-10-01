@@ -1,4 +1,4 @@
-///! Process syscalls
+/// ! Process syscalls
 use alloc::arc::Arc;
 use alloc::boxed::Box;
 use collections::Vec;
@@ -9,7 +9,8 @@ use spin::Mutex;
 use arch;
 use arch::externs::memcpy;
 use arch::memory::{allocate_frame, allocate_frames, deallocate_frames, Frame};
-use arch::paging::{ActivePageTable, InactivePageTable, Page, PhysicalAddress, VirtualAddress, entry};
+use arch::paging::{ActivePageTable, InactivePageTable, Page, PhysicalAddress, VirtualAddress,
+                   entry};
 use arch::paging::temporary_page::TemporaryPage;
 use arch::start::usermode;
 use context;
@@ -19,7 +20,8 @@ use scheme;
 use syscall;
 use syscall::data::Stat;
 use syscall::error::*;
-use syscall::flag::{CLONE_VFORK, CLONE_VM, CLONE_FS, CLONE_FILES, MAP_WRITE, MAP_WRITE_COMBINE, WNOHANG};
+use syscall::flag::{CLONE_VFORK, CLONE_VM, CLONE_FS, CLONE_FILES, MAP_WRITE, MAP_WRITE_COMBINE,
+                    WNOHANG};
 use syscall::validate::{validate_slice, validate_slice_mut};
 
 pub fn brk(address: usize) -> Result<usize> {
@@ -28,18 +30,16 @@ pub fn brk(address: usize) -> Result<usize> {
     let context = context_lock.read();
 
     let current = if let Some(ref heap_shared) = context.heap {
-        heap_shared.with(|heap| {
-            heap.start_address().get() + heap.size()
-        })
+        heap_shared.with(|heap| heap.start_address().get() + heap.size())
     } else {
         panic!("user heap not initialized");
     };
 
     if address == 0 {
-        //println!("Brk query {:X}", current);
+        // println!("Brk query {:X}", current);
         Ok(current)
     } else if address >= arch::USER_HEAP_OFFSET {
-        //TODO: out of memory errors
+        // TODO: out of memory errors
         if let Some(ref heap_shared) = context.heap {
             heap_shared.with(|heap| {
                 heap.resize(address - arch::USER_HEAP_OFFSET, true, true);
@@ -82,7 +82,8 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
             arch = context.arch.clone();
 
             if let Some(ref fx) = context.kfx {
-                let mut new_fx = unsafe { Box::from_raw(::alloc::heap::allocate(512, 16) as *mut [u8; 512]) };
+                let mut new_fx =
+                    unsafe { Box::from_raw(::alloc::heap::allocate(512, 16) as *mut [u8; 512]) };
                 for (new_b, b) in new_fx.iter_mut().zip(fx.iter()) {
                     *new_b = *b;
                 }
@@ -154,13 +155,13 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
             }
 
             if let Some(ref stack) = context.stack {
-                let mut new_stack = context::memory::Memory::new(
-                    VirtualAddress::new(arch::USER_TMP_STACK_OFFSET),
-                    stack.size(),
-                    entry::PRESENT | entry::NO_EXECUTE | entry::WRITABLE,
-                    true,
-                    false
-                );
+                let mut new_stack =
+                    context::memory::Memory::new(VirtualAddress::new(arch::USER_TMP_STACK_OFFSET),
+                                                 stack.size(),
+                                                 entry::PRESENT | entry::NO_EXECUTE |
+                                                 entry::WRITABLE,
+                                                 true,
+                                                 false);
 
                 unsafe {
                     arch::externs::memcpy(new_stack.start_address().get() as *mut u8,
@@ -213,8 +214,11 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
                     };
                     match result {
                         Ok(new_number) => {
-                            Some(context::file::File { scheme: file.scheme, number: new_number })
-                        },
+                            Some(context::file::File {
+                                scheme: file.scheme,
+                                number: new_number,
+                            })
+                        }
                         Err(err) => {
                             println!("clone: failed to dup {}: {:?}", fd, err);
                             None
@@ -258,7 +262,8 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
 
             let mut active_table = unsafe { ActivePageTable::new() };
 
-            let mut temporary_page = TemporaryPage::new(Page::containing_address(VirtualAddress::new(0x8_0000_0000)));
+            let mut temporary_page =
+                TemporaryPage::new(Page::containing_address(VirtualAddress::new(0x8_0000_0000)));
 
             let mut new_table = {
                 let frame = allocate_frame().expect("no more frames in syscall::clone new_table");
@@ -269,7 +274,8 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
 
             // Copy kernel mapping
             {
-                let frame = active_table.p4()[510].pointed_frame().expect("kernel table not mapped");
+                let frame =
+                    active_table.p4()[510].pointed_frame().expect("kernel table not mapped");
                 let flags = active_table.p4()[510].flags();
                 active_table.with(&mut new_table, &mut temporary_page, |mapper| {
                     mapper.p4_mut()[510].set(frame, flags);
@@ -290,8 +296,9 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
             // Setup heap
             if flags & CLONE_VM == CLONE_VM {
                 // Copy user image mapping, if found
-                if ! image.is_empty() {
-                    let frame = active_table.p4()[0].pointed_frame().expect("user image not mapped");
+                if !image.is_empty() {
+                    let frame =
+                        active_table.p4()[0].pointed_frame().expect("user image not mapped");
                     let flags = active_table.p4()[0].flags();
                     active_table.with(&mut new_table, &mut temporary_page, |mapper| {
                         mapper.p4_mut()[0].set(frame, flags);
@@ -309,7 +316,7 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
                     context.heap = Some(heap_shared);
                 }
 
-                if ! grants.lock().is_empty() {
+                if !grants.lock().is_empty() {
                     let frame = active_table.p4()[2].pointed_frame().expect("user heap not mapped");
                     let flags = active_table.p4()[2].flags();
                     active_table.with(&mut new_table, &mut temporary_page, |mapper| {
@@ -320,14 +327,16 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
             } else {
                 // Copy percpu mapping
                 {
-                    extern {
+                    extern "C" {
                         /// The starting byte of the thread data segment
                         static mut __tdata_start: u8;
                         /// The ending byte of the thread BSS segment
                         static mut __tbss_end: u8;
                     }
 
-                    let size = unsafe { & __tbss_end as *const _ as usize - & __tdata_start as *const _ as usize };
+                    let size = unsafe {
+                        &__tbss_end as *const _ as usize - &__tdata_start as *const _ as usize
+                    };
 
                     let start = arch::KERNEL_PERCPU_OFFSET + arch::KERNEL_PERCPU_SIZE * ::cpu_id();
                     let end = start + size;
@@ -335,9 +344,12 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
                     let start_page = Page::containing_address(VirtualAddress::new(start));
                     let end_page = Page::containing_address(VirtualAddress::new(end - 1));
                     for page in Page::range_inclusive(start_page, end_page) {
-                        let frame = active_table.translate_page(page).expect("kernel percpu not mapped");
+                        let frame = active_table.translate_page(page)
+                            .expect("kernel percpu not mapped");
                         active_table.with(&mut new_table, &mut temporary_page, |mapper| {
-                            mapper.map_to(page, frame, entry::PRESENT | entry::NO_EXECUTE | entry::WRITABLE);
+                            mapper.map_to(page,
+                                          frame,
+                                          entry::PRESENT | entry::NO_EXECUTE | entry::WRITABLE);
                         });
                     }
                 }
@@ -345,7 +357,9 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
                 // Move copy of image
                 for memory_shared in image.iter_mut() {
                     memory_shared.with(|memory| {
-                        let start = VirtualAddress::new(memory.start_address().get() - arch::USER_TMP_OFFSET + arch::USER_OFFSET);
+                        let start = VirtualAddress::new(memory.start_address().get() -
+                                                        arch::USER_TMP_OFFSET +
+                                                        arch::USER_OFFSET);
                         memory.move_to(start, &mut new_table, &mut temporary_page, true);
                     });
                 }
@@ -354,7 +368,10 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
                 // Move copy of heap
                 if let Some(heap_shared) = heap_option {
                     heap_shared.with(|heap| {
-                        heap.move_to(VirtualAddress::new(arch::USER_HEAP_OFFSET), &mut new_table, &mut temporary_page, true);
+                        heap.move_to(VirtualAddress::new(arch::USER_HEAP_OFFSET),
+                                     &mut new_table,
+                                     &mut temporary_page,
+                                     true);
                     });
                     context.heap = Some(heap_shared);
                 }
@@ -362,7 +379,10 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
 
             // Setup user stack
             if let Some(mut stack) = stack_option {
-                stack.move_to(VirtualAddress::new(arch::USER_STACK_OFFSET), &mut new_table, &mut temporary_page, true);
+                stack.move_to(VirtualAddress::new(arch::USER_STACK_OFFSET),
+                              &mut new_table,
+                              &mut temporary_page,
+                              true);
                 context.stack = Some(stack);
             }
 
@@ -374,7 +394,9 @@ pub fn clone(flags: usize, stack_base: usize) -> Result<usize> {
         }
     }
 
-    unsafe { context::switch(); }
+    unsafe {
+        context::switch();
+    }
 
     Ok(pid)
 }
@@ -410,7 +432,9 @@ pub fn exit(status: usize) -> ! {
         }
     }
 
-    unsafe { context::switch(); }
+    unsafe {
+        context::switch();
+    }
 
     unreachable!();
 }
@@ -429,7 +453,7 @@ pub fn exec(path: &[u8], arg_ptrs: &[[usize; 2]]) -> Result<usize> {
         let file = syscall::open(path, 0)?;
         let mut stat = Stat::default();
         syscall::fstat(file, &mut stat)?;
-        //TODO: Only read elf header, not entire file. Then read required segments
+        // TODO: Only read elf header, not entire file. Then read required segments
         let mut data = vec![0; stat.st_size as usize];
         syscall::read(file, &mut data)?;
         let _ = syscall::close(file);
@@ -478,7 +502,8 @@ pub fn exec(path: &[u8], arg_ptrs: &[[usize; 2]]) -> Result<usize> {
                             // W ^ X. If it is executable, do not allow it to be writable, even if requested
                             if segment.p_flags & program_header::PF_X == program_header::PF_X {
                                 flags.remove(entry::NO_EXECUTE);
-                            } else if segment.p_flags & program_header::PF_W == program_header::PF_W {
+                            } else if segment.p_flags & program_header::PF_W ==
+                                      program_header::PF_W {
                                 flags.insert(entry::WRITABLE);
                             }
 
@@ -508,15 +533,21 @@ pub fn exec(path: &[u8], arg_ptrs: &[[usize; 2]]) -> Result<usize> {
                     let mut arg_size = 0;
                     for arg in args.iter().rev() {
                         sp -= mem::size_of::<usize>();
-                        unsafe { *(sp as *mut usize) = arch::USER_ARG_OFFSET + arg_size; }
+                        unsafe {
+                            *(sp as *mut usize) = arch::USER_ARG_OFFSET + arg_size;
+                        }
                         sp -= mem::size_of::<usize>();
-                        unsafe { *(sp as *mut usize) = arg.len(); }
+                        unsafe {
+                            *(sp as *mut usize) = arg.len();
+                        }
 
                         arg_size += arg.len();
                     }
 
                     sp -= mem::size_of::<usize>();
-                    unsafe { *(sp as *mut usize) = args.len(); }
+                    unsafe {
+                        *(sp as *mut usize) = args.len();
+                    }
 
                     if arg_size > 0 {
                         let mut memory = context::memory::Memory::new(
@@ -560,16 +591,20 @@ pub fn exec(path: &[u8], arg_ptrs: &[[usize; 2]]) -> Result<usize> {
                         println!("{} not found for exec vfork unblock", ppid);
                     }
                 }
-            },
+            }
             Err(err) => {
-                println!("failed to execute {}: {}", unsafe { str::from_utf8_unchecked(path) }, err);
+                println!("failed to execute {}: {}",
+                         unsafe { str::from_utf8_unchecked(path) },
+                         err);
                 return Err(Error::new(ENOEXEC));
             }
         }
     }
 
     // Go to usermode
-    unsafe { usermode(entry, sp); }
+    unsafe {
+        usermode(entry, sp);
+    }
 }
 
 pub fn getpid() -> Result<usize> {
@@ -580,21 +615,24 @@ pub fn getpid() -> Result<usize> {
 }
 
 pub fn iopl(_level: usize) -> Result<usize> {
-    //TODO
+    // TODO
     Ok(0)
 }
 
 pub fn physalloc(size: usize) -> Result<usize> {
-    allocate_frames((size + 4095)/4096).ok_or(Error::new(ENOMEM)).map(|frame| frame.start_address().get())
+    allocate_frames((size + 4095) / 4096)
+        .ok_or(Error::new(ENOMEM))
+        .map(|frame| frame.start_address().get())
 }
 
 pub fn physfree(physical_address: usize, size: usize) -> Result<usize> {
-    deallocate_frames(Frame::containing_address(PhysicalAddress::new(physical_address)), (size + 4095)/4096);
-    //TODO: Check that no double free occured
+    deallocate_frames(Frame::containing_address(PhysicalAddress::new(physical_address)),
+                      (size + 4095) / 4096);
+    // TODO: Check that no double free occured
     Ok(0)
 }
 
-//TODO: verify exlusive access to physical memory
+// TODO: verify exlusive access to physical memory
 pub fn physmap(physical_address: usize, size: usize, flags: usize) -> Result<usize> {
     if size == 0 {
         Ok(0)
@@ -605,9 +643,9 @@ pub fn physmap(physical_address: usize, size: usize, flags: usize) -> Result<usi
 
         let mut grants = context.grants.lock();
 
-        let from_address = (physical_address/4096) * 4096;
+        let from_address = (physical_address / 4096) * 4096;
         let offset = physical_address - from_address;
-        let full_size = ((offset + size + 4095)/4096) * 4096;
+        let full_size = ((offset + size + 4095) / 4096) * 4096;
         let mut to_address = arch::USER_GRANT_OFFSET;
 
         let mut entry_flags = entry::PRESENT | entry::NO_EXECUTE | entry::USER_ACCESSIBLE;
@@ -618,15 +656,14 @@ pub fn physmap(physical_address: usize, size: usize, flags: usize) -> Result<usi
             entry_flags |= entry::HUGE_PAGE;
         }
 
-        for i in 0 .. grants.len() {
+        for i in 0..grants.len() {
             let start = grants[i].start_address().get();
             if to_address + full_size < start {
-                grants.insert(i, Grant::physmap(
-                    PhysicalAddress::new(from_address),
-                    VirtualAddress::new(to_address),
-                    full_size,
-                    entry_flags
-                ));
+                grants.insert(i,
+                              Grant::physmap(PhysicalAddress::new(from_address),
+                                             VirtualAddress::new(to_address),
+                                             full_size,
+                                             entry_flags));
 
                 return Ok(to_address + offset);
             } else {
@@ -636,12 +673,10 @@ pub fn physmap(physical_address: usize, size: usize, flags: usize) -> Result<usi
             }
         }
 
-        grants.push(Grant::physmap(
-            PhysicalAddress::new(from_address),
-            VirtualAddress::new(to_address),
-            full_size,
-            entry_flags
-        ));
+        grants.push(Grant::physmap(PhysicalAddress::new(from_address),
+                                   VirtualAddress::new(to_address),
+                                   full_size,
+                                   entry_flags));
 
         Ok(to_address + offset)
     }
@@ -657,7 +692,7 @@ pub fn physunmap(virtual_address: usize) -> Result<usize> {
 
         let mut grants = context.grants.lock();
 
-        for i in 0 .. grants.len() {
+        for i in 0..grants.len() {
             let start = grants[i].start_address().get();
             let end = start + grants[i].size();
             if virtual_address >= start && virtual_address < end {
@@ -672,7 +707,9 @@ pub fn physunmap(virtual_address: usize) -> Result<usize> {
 }
 
 pub fn sched_yield() -> Result<usize> {
-    unsafe { context::switch(); }
+    unsafe {
+        context::switch();
+    }
     Ok(0)
 }
 
@@ -680,7 +717,7 @@ pub fn virttophys(virtual_address: usize) -> Result<usize> {
     let active_table = unsafe { ActivePageTable::new() };
     match active_table.translate(VirtualAddress::new(virtual_address)) {
         Some(physical_address) => Ok(physical_address.get()),
-        None => Err(Error::new(EFAULT))
+        None => Err(Error::new(EFAULT)),
     }
 }
 
@@ -710,6 +747,8 @@ pub fn waitpid(pid: usize, status_ptr: usize, flags: usize) -> Result<usize> {
             }
         }
 
-        unsafe { context::switch(); } //TODO: Block
+        unsafe {
+            context::switch();
+        } //TODO: Block
     }
 }

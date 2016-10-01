@@ -11,14 +11,14 @@ use syscall::scheme::Scheme;
 
 pub struct EventScheme {
     next_id: AtomicUsize,
-    handles: RwLock<BTreeMap<usize, Weak<Mutex<VecDeque<Event>>>>>
+    handles: RwLock<BTreeMap<usize, Weak<Mutex<VecDeque<Event>>>>>,
 }
 
 impl EventScheme {
     pub fn new() -> EventScheme {
         EventScheme {
             next_id: AtomicUsize::new(0),
-            handles: RwLock::new(BTreeMap::new())
+            handles: RwLock::new(BTreeMap::new()),
         }
     }
 }
@@ -58,15 +58,17 @@ impl Scheme for EventScheme {
         };
 
         let event_size = mem::size_of::<Event>();
-        let len = buf.len()/event_size;
+        let len = buf.len() / event_size;
         if len > 0 {
             loop {
                 let mut i = 0;
                 {
                     let mut events = handle.lock();
-                    while ! events.is_empty() && i < len {
+                    while !events.is_empty() && i < len {
                         let event = events.pop_front().unwrap();
-                        unsafe { *(buf.as_mut_ptr() as *mut Event).offset(i as isize) = event; }
+                        unsafe {
+                            *(buf.as_mut_ptr() as *mut Event).offset(i as isize) = event;
+                        }
                         i += 1;
                     }
                 }
@@ -74,7 +76,9 @@ impl Scheme for EventScheme {
                 if i > 0 {
                     return Ok(i * event_size);
                 } else {
-                    unsafe { context::switch(); } //TODO: Block
+                    unsafe {
+                        context::switch();
+                    } //TODO: Block
                 }
             }
         } else {

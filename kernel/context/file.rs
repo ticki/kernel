@@ -1,7 +1,7 @@
 //! File struct
 
 /// A file
-//TODO: Close on exec
+// TODO: Close on exec
 #[derive(Copy, Clone, Debug)]
 pub struct File {
     /// The scheme that this file refers to
