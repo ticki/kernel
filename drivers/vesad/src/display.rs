@@ -11,6 +11,15 @@ use self::rusttype::{Font, FontCollection, Scale, point};
 #[cfg(not(feature="rusttype"))]
 static FONT: &'static [u8] = include_bytes!("../../../res/fonts/unifont.font");
 
+#[cfg(feature="rusttype")]
+static FONT: &'static [u8] = include_bytes!("../../../res/fonts/DejaVuSansMono.ttf");
+#[cfg(feature="rusttype")]
+static FONT_BOLD: &'static [u8] = include_bytes!("../../../res/fonts/DejaVuSansMono-Bold.ttf");
+#[cfg(feature="rusttype")]
+static FONT_BOLD_ITALIC: &'static [u8] = include_bytes!("../../../res/fonts/DejaVuSansMono-BoldOblique.ttf");
+#[cfg(feature="rusttype")]
+static FONT_ITALIC: &'static [u8] = include_bytes!("../../../res/fonts/DejaVuSansMono-Oblique.ttf");
+
 /// A display
 #[cfg(not(feature="rusttype"))]
 pub struct Display {
@@ -55,10 +64,10 @@ impl Display {
             height: height,
             onscreen: onscreen,
             offscreen: offscreen,
-            font: FontCollection::from_bytes(include_bytes!("../../../res/fonts/DejaVuSansMono.ttf")).into_font().unwrap(),
-            font_bold: FontCollection::from_bytes(include_bytes!("../../../res/fonts/DejaVuSansMono-Bold.ttf")).into_font().unwrap(),
-            font_bold_italic: FontCollection::from_bytes(include_bytes!("../../../res/fonts/DejaVuSansMono-BoldOblique.ttf")).into_font().unwrap(),
-            font_italic: FontCollection::from_bytes(include_bytes!("../../../res/fonts/DejaVuSansMono-Oblique.ttf")).into_font().unwrap()
+            font: FontCollection::from_bytes(FONT).into_font().unwrap(),
+            font_bold: FontCollection::from_bytes(FONT_BOLD).into_font().unwrap(),
+            font_bold_italic: FontCollection::from_bytes(FONT_BOLD_ITALIC).into_font().unwrap(),
+            font_italic: FontCollection::from_bytes(FONT_ITALIC).into_font().unwrap()
         }
     }
 

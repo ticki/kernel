@@ -1,5 +1,6 @@
 initfs:bin/pcid initfs:etc/pcid.toml
 initfs:bin/redoxfs disk:0
+initfs:bin/pcid file:etc/pcid.toml
 file:bin/vesad
 file:bin/ps2d
 file:bin/getty display:
