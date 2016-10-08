@@ -26,7 +26,7 @@ pub fn nanosleep(req: &TimeSpec, rem_opt: Option<&mut TimeSpec>) -> Result<usize
     let start = arch::time::monotonic();
     let sum = start.1 + req.tv_nsec as u64;
     let end = (start.0 + req.tv_sec as u64 + sum / 1000000000, sum % 1000000000);
-    
+
     loop {
         unsafe { context::switch(); }
 

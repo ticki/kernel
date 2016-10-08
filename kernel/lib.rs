@@ -118,6 +118,8 @@ pub mod scheme;
 /// Syscall handlers
 pub mod syscall;
 
+pub mod capability;
+
 /// Tests
 #[cfg(test)]
 pub mod tests;
